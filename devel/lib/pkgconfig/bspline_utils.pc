@@ -1,0 +1,1 @@
+/home/matt/catkin_ws/devel/.private/bspline_utils/lib/pkgconfig/bspline_utils.pc

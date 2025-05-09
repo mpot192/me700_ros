@@ -1,0 +1,14 @@
+[35m[1mScanning dependencies of target laser_to_pc2[0m
+[35m[1mScanning dependencies of target row_search_old[0m
+[35m[1mScanning dependencies of target row_search[0m
+[ 12%] [32mBuilding CXX object CMakeFiles/laser_to_pc2.dir/src/laser_to_pc2.cpp.o[0m
+[ 25%] [32mBuilding CXX object CMakeFiles/row_search_old.dir/src/dest_search.cpp.o[0m
+[ 37%] [32mBuilding CXX object CMakeFiles/row_search_old.dir/src/dest_search_class.cpp.o[0m
+[ 62%] [32mBuilding CXX object CMakeFiles/row_search.dir/src/row_search_class.cpp.o[0m
+[ 62%] [32mBuilding CXX object CMakeFiles/row_search.dir/src/row_search.cpp.o[0m
+[ 75%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/row_search/lib/row_search/laser_to_pc2[0m
+[ 75%] Built target laser_to_pc2
+[ 87%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/row_search/lib/row_search/row_search_old[0m
+[ 87%] Built target row_search_old
+[100%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/row_search/lib/row_search/row_search[0m
+[100%] Built target row_search

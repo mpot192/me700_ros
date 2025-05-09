@@ -1,0 +1,4 @@
+Symlinking /home/matt/catkin_ws/devel/lib/commander/commander_node
+Symlinking /home/matt/catkin_ws/devel/lib/pkgconfig/commander.pc
+Symlinking /home/matt/catkin_ws/devel/share/commander/cmake/commanderConfig.cmake
+Symlinking /home/matt/catkin_ws/devel/share/commander/cmake/commanderConfig-version.cmake

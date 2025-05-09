@@ -1,0 +1,8 @@
+prefix=/home/matt/catkin_ws/devel/.private/path_search
+
+Name: path_search
+Description: Description of path_search
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

@@ -1,0 +1,8 @@
+prefix=/home/matt/catkin_ws/devel/.private/fiesta
+
+Name: fiesta
+Description: Description of fiesta
+Version: 0.0.1
+Cflags: -I/home/matt/catkin_ws/src/survey_planner/FIESTA/include
+Libs: -L${prefix}/lib -lfiesta
+Requires: 

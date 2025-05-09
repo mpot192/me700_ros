@@ -1,0 +1,8 @@
+prefix=/home/matt/catkin_ws/install
+
+Name: bspline_utils
+Description: Description of bspline_utils
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lbspline_utils
+Requires: 

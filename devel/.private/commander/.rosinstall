@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/matt/catkin_ws/devel/.private/commander/setup.sh

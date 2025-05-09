@@ -1,0 +1,32 @@
+In file included from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/Constants.hpp:38[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/MessageHandling.hpp:59[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/Utils.hpp:38[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/Indexlist.hpp:39[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/SubjectTo.hpp:39[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/Bounds.hpp:39[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/QProblemB.hpp:41[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_qpoases_interface.cpp:25[m[K:
+[01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_qpoases_interface.hpp:42:[m[K [01;35m[Kwarning: [m[K"QPOASES_NCMAX" redefined
+   42 | #define QPOASES_NCMAX      0
+      | 
+In file included from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_common.h:50[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_qpoases_interface.cpp:22[m[K:
+[01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_qpoases3_interface.h:42:[m[K [01;36m[Knote: [m[Kthis is the location of the previous definition
+   42 | #define QPOASES_NCMAX      60
+      | 
+In file included from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/Constants.hpp:38[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/MessageHandling.hpp:59[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/Utils.hpp:38[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/Indexlist.hpp:39[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/SubjectTo.hpp:39[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/Bounds.hpp:39[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/qpoases/INCLUDE/QProblemB.hpp:41[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_qpoases_interface.cpp:25[m[K:
+[01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_qpoases_interface.hpp:44:[m[K [01;35m[Kwarning: [m[K"QPOASES_NWSRMAX" redefined
+   44 | #define QPOASES_NWSRMAX    180
+      | 
+In file included from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_common.h:50[m[K,
+                 from [01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_qpoases_interface.cpp:22[m[K:
+[01m[K/home/matt/catkin_ws/src/survey_tracker/uav_control_mpc/src/MPC/acado_qpoases3_interface.h:44:[m[K [01;36m[Knote: [m[Kthis is the location of the previous definition
+   44 | #define QPOASES_NWSRMAX    360
+      | 

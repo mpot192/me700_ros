@@ -1,0 +1,8 @@
+prefix=/home/matt/catkin_ws/devel/.private/bspline_utils
+
+Name: bspline_utils
+Description: Description of bspline_utils
+Version: 0.0.0
+Cflags: -I/home/matt/catkin_ws/src/survey_planner/bspline_utils/include
+Libs: -L${prefix}/lib -lbspline_utils
+Requires: 

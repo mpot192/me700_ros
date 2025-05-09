@@ -1,0 +1,26 @@
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:[m[K In constructor ‘[01m[Kbspline::bspline(Eigen::MatrixXd, int, double)[m[K’:
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:27:21:[m[K [01;35m[Kwarning: [m[Ktoo many arguments for format [[01;35m[K-Wformat-extra-args[m[K]
+   27 |         DEBUG_PRINT([01;35m[K"Knot Vector: "[m[K, "");
+      |                     [01;35m[K^~~~~~~~~~~~~~~[m[K
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:4:63:[m[K [01;36m[Knote: [m[Kin definition of macro ‘[01m[KDEBUG_PRINT[m[K’
+    4 | #define DEBUG_PRINT(fmt, ...) do{ if(ENABLE_DEBUG_MSG) printf([01;36m[Kfmt[m[K, __VA_ARGS__); } while(0)
+      |                                                               [01;36m[K^~~[m[K
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:29:21:[m[K [01;35m[Kwarning: [m[Ktoo many arguments for format [[01;35m[K-Wformat-extra-args[m[K]
+   29 |         DEBUG_PRINT([01;35m[K"\n"[m[K, "");
+      |                     [01;35m[K^~~~[m[K
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:4:63:[m[K [01;36m[Knote: [m[Kin definition of macro ‘[01m[KDEBUG_PRINT[m[K’
+    4 | #define DEBUG_PRINT(fmt, ...) do{ if(ENABLE_DEBUG_MSG) printf([01;36m[Kfmt[m[K, __VA_ARGS__); } while(0)
+      |                                                               [01;36m[K^~~[m[K
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:[m[K In constructor ‘[01m[Kbspline::bspline(Eigen::MatrixXd, int, double)[m[K’:
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:27:21:[m[K [01;35m[Kwarning: [m[Ktoo many arguments for format [[01;35m[K-Wformat-extra-args[m[K]
+   27 |         DEBUG_PRINT([01;35m[K"Knot Vector: "[m[K, "");
+      |                     [01;35m[K^~~~~~~~~~~~~~~[m[K
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:4:63:[m[K [01;36m[Knote: [m[Kin definition of macro ‘[01m[KDEBUG_PRINT[m[K’
+    4 | #define DEBUG_PRINT(fmt, ...) do{ if(ENABLE_DEBUG_MSG) printf([01;36m[Kfmt[m[K, __VA_ARGS__); } while(0)
+      |                                                               [01;36m[K^~~[m[K
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:29:21:[m[K [01;35m[Kwarning: [m[Ktoo many arguments for format [[01;35m[K-Wformat-extra-args[m[K]
+   29 |         DEBUG_PRINT([01;35m[K"\n"[m[K, "");
+      |                     [01;35m[K^~~~[m[K
+[01m[K/home/matt/catkin_ws/src/survey_planner/bspline_utils/src/bspline.cpp:4:63:[m[K [01;36m[Knote: [m[Kin definition of macro ‘[01m[KDEBUG_PRINT[m[K’
+    4 | #define DEBUG_PRINT(fmt, ...) do{ if(ENABLE_DEBUG_MSG) printf([01;36m[Kfmt[m[K, __VA_ARGS__); } while(0)
+      |                                                               [01;36m[K^~~[m[K

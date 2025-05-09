@@ -1,0 +1,4 @@
+[ 68%] Built target uav_control_mpc_acado_lib
+[ 77%] Built target offboard_test
+[ 86%] Built target test_fig8
+[100%] Built target uav_control_mpc_path_follower_mpc

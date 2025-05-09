@@ -1,0 +1,5 @@
+Symlinking /home/matt/catkin_ws/devel/lib/libbspline_utils.so
+Symlinking /home/matt/catkin_ws/devel/lib/pkgconfig/bspline_utils.pc
+Symlinking /home/matt/catkin_ws/devel/lib/bspline_utils/bspline_utils_test_bspline
+Symlinking /home/matt/catkin_ws/devel/share/bspline_utils/cmake/bspline_utilsConfig-version.cmake
+Symlinking /home/matt/catkin_ws/devel/share/bspline_utils/cmake/bspline_utilsConfig.cmake

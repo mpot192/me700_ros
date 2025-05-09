@@ -1,0 +1,8 @@
+prefix=/home/matt/catkin_ws/install
+
+Name: row_search
+Description: Description of row_search
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

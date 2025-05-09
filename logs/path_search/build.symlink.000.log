@@ -1,0 +1,4 @@
+Symlinking /home/matt/catkin_ws/devel/lib/pkgconfig/path_search.pc
+Symlinking /home/matt/catkin_ws/devel/lib/path_search/path_search_node
+Symlinking /home/matt/catkin_ws/devel/share/path_search/cmake/path_searchConfig.cmake
+Symlinking /home/matt/catkin_ws/devel/share/path_search/cmake/path_searchConfig-version.cmake

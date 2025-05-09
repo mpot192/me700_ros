@@ -1,0 +1,8 @@
+prefix=/home/matt/catkin_ws/devel/.private/uav_control_mpc
+
+Name: uav_control_mpc
+Description: Description of uav_control_mpc
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
