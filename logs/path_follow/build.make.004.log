@@ -1,0 +1,27 @@
+[35m[1mScanning dependencies of target talker[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/talker.dir/src/publish_thing.cpp.o[0m
+[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_thing.cpp:[m[K In function ‘[01m[Kint main(int, char**)[m[K’:
+[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_thing.cpp:20:9:[m[K [01;31m[Kerror: [m[K‘[01m[Kgeometry_msgs::PoseStamped[m[K’ {aka ‘[01m[Kstruct geometry_msgs::PoseStamped_<std::allocator<void> >[m[K’} has no member named ‘[01m[Kposition[m[K’
+   20 |     msg.[01;31m[Kposition[m[K.x = 10.0;
+      |         [01;31m[K^~~~~~~~[m[K
+[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_thing.cpp:21:9:[m[K [01;31m[Kerror: [m[K‘[01m[Kgeometry_msgs::PoseStamped[m[K’ {aka ‘[01m[Kstruct geometry_msgs::PoseStamped_<std::allocator<void> >[m[K’} has no member named ‘[01m[Kposition[m[K’
+   21 |     msg.[01;31m[Kposition[m[K.y = 10.0;
+      |         [01;31m[K^~~~~~~~[m[K
+[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_thing.cpp:22:9:[m[K [01;31m[Kerror: [m[K‘[01m[Kgeometry_msgs::PoseStamped[m[K’ {aka ‘[01m[Kstruct geometry_msgs::PoseStamped_<std::allocator<void> >[m[K’} has no member named ‘[01m[Kposition[m[K’
+   22 |     msg.[01;31m[Kposition[m[K.z = 10.0;
+      |         [01;31m[K^~~~~~~~[m[K
+[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_thing.cpp:24:9:[m[K [01;31m[Kerror: [m[K‘[01m[Kgeometry_msgs::PoseStamped[m[K’ {aka ‘[01m[Kstruct geometry_msgs::PoseStamped_<std::allocator<void> >[m[K’} has no member named ‘[01m[Korientation[m[K’
+   24 |     msg.[01;31m[Korientation[m[K.x = 0.0;
+      |         [01;31m[K^~~~~~~~~~~[m[K
+[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_thing.cpp:25:9:[m[K [01;31m[Kerror: [m[K‘[01m[Kgeometry_msgs::PoseStamped[m[K’ {aka ‘[01m[Kstruct geometry_msgs::PoseStamped_<std::allocator<void> >[m[K’} has no member named ‘[01m[Korientation[m[K’
+   25 |     msg.[01;31m[Korientation[m[K.y = 0.0;
+      |         [01;31m[K^~~~~~~~~~~[m[K
+[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_thing.cpp:26:9:[m[K [01;31m[Kerror: [m[K‘[01m[Kgeometry_msgs::PoseStamped[m[K’ {aka ‘[01m[Kstruct geometry_msgs::PoseStamped_<std::allocator<void> >[m[K’} has no member named ‘[01m[Korientation[m[K’
+   26 |     msg.[01;31m[Korientation[m[K.z = 0.0;
+      |         [01;31m[K^~~~~~~~~~~[m[K
+[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_thing.cpp:27:9:[m[K [01;31m[Kerror: [m[K‘[01m[Kgeometry_msgs::PoseStamped[m[K’ {aka ‘[01m[Kstruct geometry_msgs::PoseStamped_<std::allocator<void> >[m[K’} has no member named ‘[01m[Korientation[m[K’
+   27 |     msg.[01;31m[Korientation[m[K.w = 0.0;
+      |         [01;31m[K^~~~~~~~~~~[m[K
+make[2]: *** [CMakeFiles/talker.dir/build.make:63: CMakeFiles/talker.dir/src/publish_thing.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:155: CMakeFiles/talker.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

@@ -1,0 +1,15 @@
+[31m[1mCMake Error[0m at /home/matt/catkin_ws/src/path_follow/CMakeLists.txt:209 (add_executable):
+  Cannot find source file:
+
+    ./src/talker.cpp
+
+  Tried extensions .c .C .c++ .cc .cpp .cxx .cu .m .M .mm .h .hh .h++ .hm
+  .hpp .hxx .in .txx
+
+
+[31m[1mCMake Error[0m at /home/matt/catkin_ws/src/path_follow/CMakeLists.txt:209 (add_executable):
+  No SOURCES given to target: talker
+
+
+CMake Generate step failed.  Build files cannot be regenerated correctly.
+make: *** [Makefile:530: cmake_check_build_system] Error 1
