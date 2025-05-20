@@ -207,4 +207,6 @@ include_directories(
 
 
 add_executable(talker src/publish_thing.cpp)
+add_executable(path_talker src/publish_path.cpp)
 target_link_libraries(talker ${catkin_LIBRARIES})
+target_link_libraries(path_talker ${catkin_LIBRARIES})

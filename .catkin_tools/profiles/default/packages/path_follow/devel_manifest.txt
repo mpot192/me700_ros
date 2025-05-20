@@ -1,5 +1,6 @@
 path_follow
 /home/matt/catkin_ws/devel/.private/path_follow/lib/pkgconfig/path_follow.pc /home/matt/catkin_ws/devel/lib/pkgconfig/path_follow.pc
 /home/matt/catkin_ws/devel/.private/path_follow/lib/path_follow/talker /home/matt/catkin_ws/devel/lib/path_follow/talker
+/home/matt/catkin_ws/devel/.private/path_follow/lib/path_follow/path_talker /home/matt/catkin_ws/devel/lib/path_follow/path_talker
 /home/matt/catkin_ws/devel/.private/path_follow/share/path_follow/cmake/path_followConfig.cmake /home/matt/catkin_ws/devel/share/path_follow/cmake/path_followConfig.cmake
 /home/matt/catkin_ws/devel/.private/path_follow/share/path_follow/cmake/path_followConfig-version.cmake /home/matt/catkin_ws/devel/share/path_follow/cmake/path_followConfig-version.cmake

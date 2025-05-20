@@ -259,6 +259,19 @@ clean_test_results/fast:
 .PHONY : clean_test_results/fast
 
 #=============================================================================
+# Target rules for targets named path_talker
+
+# Build rule for target.
+path_talker: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 path_talker
+.PHONY : path_talker
+
+# fast build rule for target.
+path_talker/fast:
+	$(MAKE) -f CMakeFiles/path_talker.dir/build.make CMakeFiles/path_talker.dir/build
+.PHONY : path_talker/fast
+
+#=============================================================================
 # Target rules for targets named std_msgs_generate_messages_lisp
 
 # Build rule for target.
@@ -492,6 +505,33 @@ gtest/fast:
 	$(MAKE) -f gtest/googletest/CMakeFiles/gtest.dir/build.make gtest/googletest/CMakeFiles/gtest.dir/build
 .PHONY : gtest/fast
 
+src/publish_path.o: src/publish_path.cpp.o
+
+.PHONY : src/publish_path.o
+
+# target to build an object file
+src/publish_path.cpp.o:
+	$(MAKE) -f CMakeFiles/path_talker.dir/build.make CMakeFiles/path_talker.dir/src/publish_path.cpp.o
+.PHONY : src/publish_path.cpp.o
+
+src/publish_path.i: src/publish_path.cpp.i
+
+.PHONY : src/publish_path.i
+
+# target to preprocess a source file
+src/publish_path.cpp.i:
+	$(MAKE) -f CMakeFiles/path_talker.dir/build.make CMakeFiles/path_talker.dir/src/publish_path.cpp.i
+.PHONY : src/publish_path.cpp.i
+
+src/publish_path.s: src/publish_path.cpp.s
+
+.PHONY : src/publish_path.s
+
+# target to generate assembly for a file
+src/publish_path.cpp.s:
+	$(MAKE) -f CMakeFiles/path_talker.dir/build.make CMakeFiles/path_talker.dir/src/publish_path.cpp.s
+.PHONY : src/publish_path.cpp.s
+
 src/publish_thing.o: src/publish_thing.cpp.o
 
 .PHONY : src/publish_thing.o
@@ -538,6 +578,7 @@ help:
 	@echo "... tests"
 	@echo "... clean_test_results"
 	@echo "... list_install_components"
+	@echo "... path_talker"
 	@echo "... std_msgs_generate_messages_lisp"
 	@echo "... run_tests"
 	@echo "... download_extra_data"
@@ -557,6 +598,9 @@ help:
 	@echo "... gmock"
 	@echo "... gtest_main"
 	@echo "... gtest"
+	@echo "... src/publish_path.o"
+	@echo "... src/publish_path.i"
+	@echo "... src/publish_path.s"
 	@echo "... src/publish_thing.o"
 	@echo "... src/publish_thing.i"
 	@echo "... src/publish_thing.s"

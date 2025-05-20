@@ -11,6 +11,7 @@
 /home/matt/catkin_ws/build/path_follow/CMakeFiles/tests.dir
 /home/matt/catkin_ws/build/path_follow/CMakeFiles/clean_test_results.dir
 /home/matt/catkin_ws/build/path_follow/CMakeFiles/list_install_components.dir
+/home/matt/catkin_ws/build/path_follow/CMakeFiles/path_talker.dir
 /home/matt/catkin_ws/build/path_follow/CMakeFiles/std_msgs_generate_messages_lisp.dir
 /home/matt/catkin_ws/build/path_follow/CMakeFiles/run_tests.dir
 /home/matt/catkin_ws/build/path_follow/CMakeFiles/download_extra_data.dir

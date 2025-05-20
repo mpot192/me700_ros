@@ -54,6 +54,7 @@ CMAKE_BINARY_DIR = /home/matt/catkin_ws/build/path_follow
 
 # The main recursive "all" target.
 all: CMakeFiles/talker.dir/all
+all: CMakeFiles/path_talker.dir/all
 all: gtest/all
 
 .PHONY : all
@@ -71,6 +72,7 @@ clean: CMakeFiles/std_msgs_generate_messages_cpp.dir/clean
 clean: CMakeFiles/rosgraph_msgs_generate_messages_nodejs.dir/clean
 clean: CMakeFiles/tests.dir/clean
 clean: CMakeFiles/clean_test_results.dir/clean
+clean: CMakeFiles/path_talker.dir/clean
 clean: CMakeFiles/std_msgs_generate_messages_lisp.dir/clean
 clean: CMakeFiles/run_tests.dir/clean
 clean: CMakeFiles/download_extra_data.dir/clean
@@ -153,7 +155,7 @@ gtest/googletest/clean: gtest/googletest/CMakeFiles/gtest.dir/clean
 CMakeFiles/talker.dir/all:
 	$(MAKE) -f CMakeFiles/talker.dir/build.make CMakeFiles/talker.dir/depend
 	$(MAKE) -f CMakeFiles/talker.dir/build.make CMakeFiles/talker.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/matt/catkin_ws/build/path_follow/CMakeFiles --progress-num=9,10 "Built target talker"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/matt/catkin_ws/build/path_follow/CMakeFiles --progress-num=11,12 "Built target talker"
 .PHONY : CMakeFiles/talker.dir/all
 
 # Build rule for subdir invocation for target.
@@ -334,6 +336,33 @@ clean_test_results: CMakeFiles/clean_test_results.dir/rule
 CMakeFiles/clean_test_results.dir/clean:
 	$(MAKE) -f CMakeFiles/clean_test_results.dir/build.make CMakeFiles/clean_test_results.dir/clean
 .PHONY : CMakeFiles/clean_test_results.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/path_talker.dir
+
+# All Build rule for target.
+CMakeFiles/path_talker.dir/all:
+	$(MAKE) -f CMakeFiles/path_talker.dir/build.make CMakeFiles/path_talker.dir/depend
+	$(MAKE) -f CMakeFiles/path_talker.dir/build.make CMakeFiles/path_talker.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/matt/catkin_ws/build/path_follow/CMakeFiles --progress-num=9,10 "Built target path_talker"
+.PHONY : CMakeFiles/path_talker.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/path_talker.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/matt/catkin_ws/build/path_follow/CMakeFiles 2
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/path_talker.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/matt/catkin_ws/build/path_follow/CMakeFiles 0
+.PHONY : CMakeFiles/path_talker.dir/rule
+
+# Convenience name for target.
+path_talker: CMakeFiles/path_talker.dir/rule
+
+.PHONY : path_talker
+
+# clean rule for target.
+CMakeFiles/path_talker.dir/clean:
+	$(MAKE) -f CMakeFiles/path_talker.dir/build.make CMakeFiles/path_talker.dir/clean
+.PHONY : CMakeFiles/path_talker.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/std_msgs_generate_messages_lisp.dir
