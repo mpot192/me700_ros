@@ -5,7 +5,12 @@ CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /home/matt/catkin_ws/src/path
 CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/geometry_msgs/Point.h
 CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/geometry_msgs/Pose.h
 CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/geometry_msgs/PoseStamped.h
+CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/geometry_msgs/PoseWithCovariance.h
 CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/geometry_msgs/Quaternion.h
+CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/geometry_msgs/Twist.h
+CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/geometry_msgs/TwistWithCovariance.h
+CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/geometry_msgs/Vector3.h
+CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/nav_msgs/Odometry.h
 CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/ros/advertise_options.h
 CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/ros/advertise_service_options.h
 CMakeFiles/path_talker.dir/src/publish_path.cpp.o: /opt/ros/noetic/include/ros/assert.h
