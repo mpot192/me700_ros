@@ -1,0 +1,4 @@
+Symlinking /home/matt/catkin_ws/devel/lib/path_gen/read_stereo
+Symlinking /home/matt/catkin_ws/devel/lib/pkgconfig/path_gen.pc
+Symlinking /home/matt/catkin_ws/devel/share/path_gen/cmake/path_genConfig-version.cmake
+Symlinking /home/matt/catkin_ws/devel/share/path_gen/cmake/path_genConfig.cmake

@@ -1,9 +1,0 @@
-[35m[1mScanning dependencies of target path_talker[0m
-[ 25%] [32mBuilding CXX object CMakeFiles/path_talker.dir/src/publish_path.cpp.o[0m
-[ 75%] Built target talker
-[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_path.cpp:8:53:[m[K [01;31m[Kerror: [m[Kexpected primary-expression before ‘[01m[K;[m[K’ token
-    8 | nav_msgs::Odometry::ConstPtr& drone_odom = nullptr_t[01;31m[K;[m[K
-      |                                                     [01;31m[K^[m[K
-make[2]: *** [CMakeFiles/path_talker.dir/build.make:63: CMakeFiles/path_talker.dir/src/publish_path.cpp.o] Error 1
-make[1]: *** [CMakeFiles/Makefile2:346: CMakeFiles/path_talker.dir/all] Error 2
-make: *** [Makefile:141: all] Error 2
