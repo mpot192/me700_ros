@@ -1,0 +1,11 @@
+[35m[1mScanning dependencies of target read_stereo[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/read_stereo.dir/src/read_stereo.cpp.o[0m
+[01m[K/home/matt/catkin_ws/src/path_gen/src/read_stereo.cpp:[m[K In function ‘[01m[Kfloat GetHeight(pcl::PointCloud<pcl::PointXYZ>&, int, int, int, int)[m[K’:
+[01m[K/home/matt/catkin_ws/src/path_gen/src/read_stereo.cpp:13:18:[m[K [01;31m[Kerror: [m[Kcannot convert ‘[01m[Kpcl::PointXYZ[m[K’ to ‘[01m[Kfloat[m[K’ in return
+   13 |   return [01;31m[Kcloud.at(0,0)[m[K;
+      |          [01;31m[K~~~~~~~~^~~~~[m[K
+      |                  [01;31m[K|[m[K
+      |                  [01;31m[Kpcl::PointXYZ[m[K
+make[2]: *** [CMakeFiles/read_stereo.dir/build.make:63: CMakeFiles/read_stereo.dir/src/read_stereo.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:488: CMakeFiles/read_stereo.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

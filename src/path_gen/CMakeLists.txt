@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
 )
-
+find_package(OpenCV REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -119,6 +119,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -207,4 +208,6 @@ include_directories(
 # catkin_add_nosetests(test)
 
 add_executable(read_stereo src/read_stereo.cpp)
-target_link_libraries(read_stereo ${catkin_LIBRARIES})
+target_link_libraries(read_stereo 
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES})

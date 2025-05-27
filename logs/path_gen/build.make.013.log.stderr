@@ -1,0 +1,16 @@
+[01m[K/home/matt/catkin_ws/src/path_gen/src/read_stereo.cpp:[m[K In function ‘[01m[Kvoid cloud_cb(const PointCloud2ConstPtr&)[m[K’:
+[01m[K/home/matt/catkin_ws/src/path_gen/src/read_stereo.cpp:19:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kcv[m[K’ has not been declared
+   19 |     [01;31m[Kcv[m[K::Mat img(height, width, CV_8UC1);
+      |     [01;31m[K^~[m[K
+[01m[K/home/matt/catkin_ws/src/path_gen/src/read_stereo.cpp:23:9:[m[K [01;31m[Kerror: [m[K‘[01m[Kimg[m[K’ was not declared in this scope
+   23 |         [01;31m[Kimg[m[K.at(i,j) = static_cast<uint8_t>((pcl_cloud.at(j,i).z/18) * 255);
+      |         [01;31m[K^~~[m[K
+[01m[K/home/matt/catkin_ws/src/path_gen/src/read_stereo.cpp:26:5:[m[K [01;31m[Kerror: [m[K‘[01m[Kcv[m[K’ has not been declared
+   26 |     [01;31m[Kcv[m[K::imshow(img);
+      |     [01;31m[K^~[m[K
+[01m[K/home/matt/catkin_ws/src/path_gen/src/read_stereo.cpp:26:16:[m[K [01;31m[Kerror: [m[K‘[01m[Kimg[m[K’ was not declared in this scope
+   26 |     cv::imshow([01;31m[Kimg[m[K);
+      |                [01;31m[K^~~[m[K
+make[2]: *** [CMakeFiles/read_stereo.dir/build.make:63: CMakeFiles/read_stereo.dir/src/read_stereo.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:488: CMakeFiles/read_stereo.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

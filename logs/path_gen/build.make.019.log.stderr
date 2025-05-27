@@ -1,0 +1,13 @@
+/usr/bin/ld: CMakeFiles/read_stereo.dir/src/read_stereo.cpp.o: in function `cloud_cb(boost::shared_ptr<sensor_msgs::PointCloud2_<std::allocator<void> > const> const&)':
+read_stereo.cpp:(.text+0x28a): undefined reference to `cv::Mat::create(int, int const*, int)'
+/usr/bin/ld: read_stereo.cpp:(.text+0x3bd): undefined reference to `cv::imshow(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, cv::_InputArray const&)'
+/usr/bin/ld: read_stereo.cpp:(.text+0x3d5): undefined reference to `cv::waitKey(int)'
+/usr/bin/ld: read_stereo.cpp:(.text+0x450): undefined reference to `cv::fastFree(void*)'
+/usr/bin/ld: read_stereo.cpp:(.text+0x5d0): undefined reference to `cv::Mat::deallocate()'
+/usr/bin/ld: CMakeFiles/read_stereo.dir/src/read_stereo.cpp.o: in function `cv::Mat::~Mat()':
+read_stereo.cpp:(.text._ZN2cv3MatD2Ev[_ZN2cv3MatD5Ev]+0x5e): undefined reference to `cv::fastFree(void*)'
+/usr/bin/ld: read_stereo.cpp:(.text._ZN2cv3MatD2Ev[_ZN2cv3MatD5Ev]+0x69): undefined reference to `cv::Mat::deallocate()'
+collect2: error: ld returned 1 exit status
+make[2]: *** [CMakeFiles/read_stereo.dir/build.make:200: /home/matt/catkin_ws/devel/.private/path_gen/lib/path_gen/read_stereo] Error 1
+make[1]: *** [CMakeFiles/Makefile2:488: CMakeFiles/read_stereo.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

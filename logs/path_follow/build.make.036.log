@@ -1,5 +1,0 @@
-[35m[1mScanning dependencies of target path_talker[0m
-[ 75%] Built target talker
-[ 75%] [32mBuilding CXX object CMakeFiles/path_talker.dir/src/publish_path.cpp.o[0m
-[100%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/path_follow/lib/path_follow/path_talker[0m
-[100%] Built target path_talker
