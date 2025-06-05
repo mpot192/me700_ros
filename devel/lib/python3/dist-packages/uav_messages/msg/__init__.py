@@ -1,1 +1,0 @@
-/home/matt/catkin_ws/devel/.private/uav_messages/lib/python3/dist-packages/uav_messages/msg/__init__.py

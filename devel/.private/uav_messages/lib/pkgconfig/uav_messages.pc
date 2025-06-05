@@ -1,8 +1,0 @@
-prefix=/home/matt/catkin_ws/devel/.private/uav_messages
-
-Name: uav_messages
-Description: Description of uav_messages
-Version: 0.0.0
-Cflags: -I/home/matt/catkin_ws/devel/.private/uav_messages/include
-Libs: -L${prefix}/lib 
-Requires: 

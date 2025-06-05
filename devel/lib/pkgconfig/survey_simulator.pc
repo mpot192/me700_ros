@@ -1,1 +1,0 @@
-/home/matt/catkin_ws/devel/.private/survey_simulator/lib/pkgconfig/survey_simulator.pc

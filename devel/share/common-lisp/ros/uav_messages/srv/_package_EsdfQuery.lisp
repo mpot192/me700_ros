@@ -1,1 +1,0 @@
-/home/matt/catkin_ws/devel/.private/uav_messages/share/common-lisp/ros/uav_messages/srv/_package_EsdfQuery.lisp

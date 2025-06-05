@@ -1,1 +1,0 @@
-/home/matt/catkin_ws/devel/.private/path_follow/lib/pkgconfig/path_follow.pc

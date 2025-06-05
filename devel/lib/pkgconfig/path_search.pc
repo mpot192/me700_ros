@@ -1,1 +1,0 @@
-/home/matt/catkin_ws/devel/.private/path_search/lib/pkgconfig/path_search.pc

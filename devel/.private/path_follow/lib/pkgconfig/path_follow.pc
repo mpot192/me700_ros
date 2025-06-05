@@ -1,8 +1,0 @@
-prefix=/home/matt/catkin_ws/devel/.private/path_follow
-
-Name: path_follow
-Description: Description of path_follow
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

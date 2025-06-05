@@ -1,1 +1,0 @@
-/home/matt/catkin_ws/devel/.private/uav_helpers/lib/pkgconfig/uav_helpers.pc

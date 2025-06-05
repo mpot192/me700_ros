@@ -1,8 +1,0 @@
-prefix=/home/matt/catkin_ws/devel/.private/uav_helpers
-
-Name: uav_helpers
-Description: Description of uav_helpers
-Version: 0.0.0
-Cflags: -I/home/matt/catkin_ws/src/survey_common/uav_helpers/include
-Libs: -L${prefix}/lib 
-Requires: 
