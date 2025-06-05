@@ -1,0 +1,3 @@
+[ 50%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/path_follow/lib/path_follow/talker[0m
+[ 75%] Built target path_talker
+[100%] Built target talker

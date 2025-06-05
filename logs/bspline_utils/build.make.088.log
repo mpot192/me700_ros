@@ -1,0 +1,4 @@
+[ 20%] [32m[1mLinking CXX shared library /home/matt/catkin_ws/devel/.private/bspline_utils/lib/libbspline_utils.so[0m
+[ 40%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/bspline_utils/lib/bspline_utils/bspline_utils_test_bspline[0m
+[ 60%] Built target bspline_utils
+[100%] Built target bspline_utils_test_bspline

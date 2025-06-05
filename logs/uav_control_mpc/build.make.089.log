@@ -1,0 +1,7 @@
+[ 68%] Built target uav_control_mpc_acado_lib
+[ 72%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/uav_control_mpc/lib/uav_control_mpc/offboard_test[0m
+[ 77%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/uav_control_mpc/lib/uav_control_mpc/test_fig8[0m
+[ 81%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/uav_control_mpc/lib/uav_control_mpc/uav_control_mpc_path_follower_mpc[0m
+[ 86%] Built target offboard_test
+[ 90%] Built target test_fig8
+[100%] Built target uav_control_mpc_path_follower_mpc

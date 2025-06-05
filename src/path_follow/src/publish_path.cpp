@@ -57,7 +57,7 @@ int main(int argc, char **argv){
     ROS_INFO("RMSE: %.2f",RMSE);
 
     // Move to next index in desired path
-    if (RMSE <= 0.01 && idx < cols){
+    if (RMSE <= 0.2 && idx < cols){
         idx++;
     } else if (idx == cols - 1){
         idx = 0;
