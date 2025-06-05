@@ -1,4 +1,0 @@
-[ 20%] [32m[1mLinking CXX shared library /home/matt/catkin_ws/devel/.private/path_opt/lib/libpath_opt.so[0m
-[ 40%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/path_opt/lib/path_opt/bspline_opt_test[0m
-[ 80%] Built target bspline_opt_test
-[100%] Built target path_opt

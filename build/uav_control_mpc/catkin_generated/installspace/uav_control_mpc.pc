@@ -1,8 +1,0 @@
-prefix=/home/matt/catkin_ws/install
-
-Name: uav_control_mpc
-Description: Description of uav_control_mpc
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

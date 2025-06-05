@@ -1,6 +1,0 @@
-[ 12%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/row_search/lib/row_search/laser_to_pc2[0m
-[ 25%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/row_search/lib/row_search/row_search_old[0m
-[ 37%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/row_search/lib/row_search/row_search[0m
-[ 50%] Built target laser_to_pc2
-[ 75%] Built target row_search_old
-[100%] Built target row_search

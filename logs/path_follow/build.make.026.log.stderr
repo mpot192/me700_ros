@@ -1,7 +1,0 @@
-[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_path.cpp:8:44:[m[K [01;31m[Kerror: [m[K‘[01m[Knull_ptr[m[K’ was not declared in this scope; did you mean ‘[01m[Knullptr_t[m[K’?
-    8 | nav_msgs::Odometry::ConstPtr& drone_odom = [01;31m[Knull_ptr[m[K;
-      |                                            [01;31m[K^~~~~~~~[m[K
-      |                                            [32m[Knullptr_t[m[K
-make[2]: *** [CMakeFiles/path_talker.dir/build.make:63: CMakeFiles/path_talker.dir/src/publish_path.cpp.o] Error 1
-make[1]: *** [CMakeFiles/Makefile2:346: CMakeFiles/path_talker.dir/all] Error 2
-make: *** [Makefile:141: all] Error 2

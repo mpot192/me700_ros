@@ -1,8 +1,0 @@
-[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_path.cpp:[m[K In function ‘[01m[Kint main(int, char**)[m[K’:
-[01m[K/home/matt/catkin_ws/src/path_follow/src/publish_path.cpp:56:9:[m[K [01;31m[Kerror: [m[K‘[01m[KRMSE[m[K’ was not declared in this scope; did you mean ‘[01m[KGetRMSE[m[K’?
-   56 |     if ([01;31m[KRMSE[m[K <= 0.1 && idx < cols){
-      |         [01;31m[K^~~~[m[K
-      |         [32m[KGetRMSE[m[K
-make[2]: *** [CMakeFiles/path_talker.dir/build.make:63: CMakeFiles/path_talker.dir/src/publish_path.cpp.o] Error 1
-make[1]: *** [CMakeFiles/Makefile2:346: CMakeFiles/path_talker.dir/all] Error 2
-make: *** [Makefile:141: all] Error 2

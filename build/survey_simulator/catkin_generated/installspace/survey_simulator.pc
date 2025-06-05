@@ -1,8 +1,0 @@
-prefix=/home/matt/catkin_ws/install
-
-Name: survey_simulator
-Description: Description of survey_simulator
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

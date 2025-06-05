@@ -1,8 +1,0 @@
-prefix=/home/matt/catkin_ws/install
-
-Name: path_gen
-Description: Description of path_gen
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

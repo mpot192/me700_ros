@@ -1,4 +1,0 @@
-[  9%] [32m[1mLinking CXX shared library /home/matt/catkin_ws/devel/.private/fiesta/lib/libfiesta.so[0m
-[ 18%] [32m[1mLinking CXX executable /home/matt/catkin_ws/devel/.private/fiesta/lib/fiesta/test_fiesta[0m
-[ 54%] Built target fiesta
-[100%] Built target test_fiesta

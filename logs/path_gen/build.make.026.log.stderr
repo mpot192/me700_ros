@@ -1,7 +1,0 @@
-[01m[K/home/matt/catkin_ws/src/path_gen/src/read_stereo.cpp:[m[K In function ‘[01m[Kfloat GetHeight(pcl::PointCloud<pcl::PointXYZ>&, int, int, int, int)[m[K’:
-[01m[K/home/matt/catkin_ws/src/path_gen/src/read_stereo.cpp:13:15:[m[K [01;31m[Kerror: [m[Kbase operand of ‘[01m[K->[m[K’ has non-pointer type ‘[01m[Kpcl::PointCloud<pcl::PointXYZ>[m[K’
-   13 |   return cloud[01;31m[K->[m[Kat(0,0);
-      |               [01;31m[K^~[m[K
-make[2]: *** [CMakeFiles/read_stereo.dir/build.make:63: CMakeFiles/read_stereo.dir/src/read_stereo.cpp.o] Error 1
-make[1]: *** [CMakeFiles/Makefile2:488: CMakeFiles/read_stereo.dir/all] Error 2
-make: *** [Makefile:141: all] Error 2
