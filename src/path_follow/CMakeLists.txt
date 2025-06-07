@@ -208,5 +208,7 @@ include_directories(
 
 add_executable(talker src/publish_thing.cpp)
 add_executable(path_talker src/publish_path.cpp)
+add_executable(hover_origin src/publish_origin_hover.cpp)
 target_link_libraries(talker ${catkin_LIBRARIES})
 target_link_libraries(path_talker ${catkin_LIBRARIES})
+target_link_libraries(hover_origin ${catkin_LIBRARIES})
