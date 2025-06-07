@@ -1,4 +1,0 @@
-survey_simulator
-/home/hivan/catkin_ws/devel/.private/survey_simulator/lib/pkgconfig/survey_simulator.pc /home/hivan/catkin_ws/devel/lib/pkgconfig/survey_simulator.pc
-/home/hivan/catkin_ws/devel/.private/survey_simulator/share/survey_simulator/cmake/survey_simulatorConfig-version.cmake /home/hivan/catkin_ws/devel/share/survey_simulator/cmake/survey_simulatorConfig-version.cmake
-/home/hivan/catkin_ws/devel/.private/survey_simulator/share/survey_simulator/cmake/survey_simulatorConfig.cmake /home/hivan/catkin_ws/devel/share/survey_simulator/cmake/survey_simulatorConfig.cmake

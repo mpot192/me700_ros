@@ -1,6 +1,0 @@
-survey_planner/FIESTA
-/home/matt/catkin_ws/devel/.private/fiesta/lib/libfiesta.so /home/matt/catkin_ws/devel/lib/libfiesta.so
-/home/matt/catkin_ws/devel/.private/fiesta/lib/pkgconfig/fiesta.pc /home/matt/catkin_ws/devel/lib/pkgconfig/fiesta.pc
-/home/matt/catkin_ws/devel/.private/fiesta/lib/fiesta/test_fiesta /home/matt/catkin_ws/devel/lib/fiesta/test_fiesta
-/home/matt/catkin_ws/devel/.private/fiesta/share/fiesta/cmake/fiestaConfig.cmake /home/matt/catkin_ws/devel/share/fiesta/cmake/fiestaConfig.cmake
-/home/matt/catkin_ws/devel/.private/fiesta/share/fiesta/cmake/fiestaConfig-version.cmake /home/matt/catkin_ws/devel/share/fiesta/cmake/fiestaConfig-version.cmake
