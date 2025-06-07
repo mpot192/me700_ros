@@ -146,7 +146,7 @@
     </spherical_coordinates>
     <model name='iris'>
       <frame name='iris::__model__' attached_to='iris::base_link'>
-        <pose relative_to='__model__'>0 0 0 0 -0 0</pose>
+        <pose relative_to='__model__'>0 0 0 0 1.571 0</pose>
       </frame>
       <link name='iris::base_link'>
         <pose relative_to='iris::__model__'>0 0 0 0 -0 0</pose>
@@ -810,7 +810,7 @@
         <accelerometerTurnOnBiasSigma>0.196</accelerometerTurnOnBiasSigma>
       </plugin>
       <frame name='depth_camera::__model__' attached_to='depth_camera::link'>
-        <pose relative_to='__model__'>0.1 0 0 0 0 0</pose>
+        <pose relative_to='__model__'>0 0 -0.1 0 0 0</pose>
       </frame>
       <link name='depth_camera::link'>
         <inertial>
