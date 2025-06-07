@@ -11,3 +11,4 @@ export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:${SRC_DIR}
 export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:${SRC_DIR}/Tools/sitl_gazebo
 
 roslaunch survey_simulator sitl_mavros.launch sdf:=$2 world:=$3
+rosservice call /gazebo/delete_model "model_name: 'iris'" 2>/dev/null
