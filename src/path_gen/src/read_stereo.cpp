@@ -40,14 +40,14 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud){
   if(!created_image){
     int width = pcl_cloud.width;
     int height = pcl_cloud.height;
-
+  // just depth information
     cv::Mat img(height, width, CV_8UC1);
     std::ofstream out("./img.txt");
     out << "[";
     for(int i = 0; i < height; i++){
       for(int j = 0; j < width; j++){
         auto& pt = pcl_cloud.at(j,i) ;
-        img.at<uint8_t>(i,j) = static_cast<uint8_t>((pt.z) * 255/18);
+        img.at<uint8_t>(i,j) = static_cast<uint8_t>((pt.z) * 255/5);
         out << pt.z;
         if (j != width - 1){
           out << ", ";
@@ -57,6 +57,50 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud){
     }
     out << "]";
     out.close();
+
+    // full positions in matlab format
+    std::ofstream outf("./full_info.txt");
+    outf << "depthxyz(:,:,1) = [";
+    for(int i = 0; i < height; i++){
+      for(int j = 0; j < width; j++){
+        auto& pt = pcl_cloud.at(j,i) ;
+        outf << pt.x;
+        if (j != width - 1){
+          outf << ", ";
+        }
+      }
+      outf << ";" << std::endl;
+    }
+    outf << "];" << std::endl;
+
+    outf << "depthxyz(:,:,2) = [";
+    for(int i = 0; i < height; i++){
+      for(int j = 0; j < width; j++){
+        auto& pt = pcl_cloud.at(j,i) ;
+        outf << pt.y;
+        if (j != width - 1){
+          outf << ", ";
+        }
+      }
+      outf << ";" << std::endl;
+    }
+    outf << "];" << std::endl;
+
+    outf << "depthxyz(:,:,3) = [";
+    for(int i = 0; i < height; i++){
+      for(int j = 0; j < width; j++){
+        auto& pt = pcl_cloud.at(j,i) ;
+        outf << pt.z;
+        if (j != width - 1){
+          outf << ", ";
+        }
+      }
+      outf << ";" << std::endl;
+    }
+    outf << "];" << std::endl;
+    outf.close();
+
+    // show image
     cv::imshow("window", img);
     cv::imwrite("./img.png", img);
     int k = cv::waitKey(0);
