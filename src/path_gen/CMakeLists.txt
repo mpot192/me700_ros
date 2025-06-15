@@ -117,7 +117,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
@@ -207,7 +207,7 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(read_stereo src/read_stereo.cpp)
+add_executable(read_stereo src/read_stereo.cpp src/PCHandler.cpp)
 target_link_libraries(read_stereo 
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES})

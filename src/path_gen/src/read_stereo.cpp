@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <fstream>
 #include <iostream>
-
+#include "path_gen/PCHandler.hpp"
 
 using namespace std;
 
@@ -31,117 +31,7 @@ using namespace std;
 #define UNCERTAINTY 0.9
 
 bool created_image = false;
-pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud;
-
-float GetHeight(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int bb_w, int bb_h, int bb_x, int bb_y){
-  int pad = 10; // Distance around bounding box input to include in scan
-  float grad_thresh = 0.5; // Threshold gradient [m] to count as hard edge of object
-  ROS_INFO("Processing bounding box: [%d %d], [%d %d]", bb_w, bb_h, bb_x, bb_y);
-  float grad;
-  float grads[bb_h];
-  int grad_cnt = 0; 
-
-  for(int i = (bb_y - floor(bb_h/2) - pad) + 1; i < (bb_y + floor(bb_h/2) + pad); i++){
-    for(int j = (bb_x - floor(bb_w/2) - pad) + 1; j < (bb_x + floor(bb_w/2) + pad); j++){
-      grad = (cloud->at(j,i).z) - (cloud->at(j-1,i).z);
-      if(abs(grad > grad_thresh)){
-        grads[grad_cnt++] = abs(grad);
-      }
-    }
-  }
-
-  float grad_sum = 0;
-  for(int i = 0; i < grad_cnt; i++){
-    grad_sum += grads[i];
-  }
-  return grad_sum/grad_cnt;
-}
-
-
-void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud){
-  pcl_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>());
-  pcl::fromROSMsg(*cloud, *pcl_cloud);
-  // This just saves the first captured stereo reading as img and text file of depth values
-  if(!created_image){
-    int width = pcl_cloud->width;
-    int height = pcl_cloud->height;
-  // just depth information
-    cv::Mat img(height, width, CV_8UC1);
-    std::ofstream out("./img.txt");
-    out << "[";
-    for(int i = 0; i < height; i++){
-      for(int j = 0; j < width; j++){
-        auto& pt = pcl_cloud->at(j,i) ;
-        img.at<uint8_t>(i,j) = static_cast<uint8_t>((pt.z) * 255/5);
-        out << pt.z;
-        if (j != width - 1){
-          out << ", ";
-        }
-      }
-      out << std::endl;
-    }
-    out << "]";
-    out.close();
-
-    // full positions in matlab format
-    std::ofstream outf("./full_info.txt");
-    outf << "depthxyz(:,:,1) = [";
-    for(int i = 0; i < height; i++){
-      for(int j = 0; j < width; j++){
-        auto& pt = pcl_cloud->at(j,i) ;
-        outf << pt.x;
-        if (j != width - 1){
-          outf << ", ";
-        }
-      }
-      outf << ";" << std::endl;
-    }
-    outf << "];" << std::endl;
-
-    outf << "depthxyz(:,:,2) = [";
-    for(int i = 0; i < height; i++){
-      for(int j = 0; j < width; j++){
-        auto& pt = pcl_cloud->at(j,i) ;
-        outf << pt.y;
-        if (j != width - 1){
-          outf << ", ";
-        }
-      }
-      outf << ";" << std::endl;
-    }
-    outf << "];" << std::endl;
-
-    outf << "depthxyz(:,:,3) = [";
-    for(int i = 0; i < height; i++){
-      for(int j = 0; j < width; j++){
-        auto& pt = pcl_cloud->at(j,i) ;
-        outf << pt.z;
-        if (j != width - 1){
-          outf << ", ";
-        }
-      }
-      outf << ";" << std::endl;
-    }
-    outf << "];" << std::endl;
-    outf.close();
-
-    // show image
-    cv::imshow("window", img);
-    cv::imwrite("./img.png", img);
-    int k = cv::waitKey(0);
-    cv::destroyAllWindows();
-    created_image = true;
-
-    // Processing data to find objects 
-    float w = 200; // bounding box width 
-    float h = 200; // height 
-    float x = 300; // centre x
-    float y = 150; // centre y
-                  
-    float d = GetHeight(pcl_cloud, w, h, x, y);
-    ROS_INFO("OBJECT HEIGHT/DEPTH: %.2f", d);
-  }
-}
+PCHandler handler;
 
 void Cylinder(float r, int n, float h, float cyl[][3]){
   // float r = diameter/2;
@@ -166,7 +56,7 @@ int GeneratePath(float (&path)[PATH_SIZE][3], int bbx, int bby, int bbh, int bbw
   float starth;
   float endh;
 
-  auto& dcpt = pcl_cloud->at(bby,bbx) ;
+  auto& dcpt = handler.GetPC()->at(bby,bbx);
 
   float dcx = dcpt.x;
   float dcy = dcpt.y;
@@ -183,7 +73,7 @@ int GeneratePath(float (&path)[PATH_SIZE][3], int bbx, int bby, int bbh, int bbw
   for(int i = 0; i < IMGW; i++){
     for(int j = 0; j < IMGH; j++){
       if(pow((i - bbx),2) + pow((j - bby),2) <= pow(bbru, 2)){
-        auto& pt = pcl_cloud->at(j,i) ;
+        auto& pt = handler.GetPC()->at(j,i) ;
         if(sz == 0){
           maxh = pt.z;
           minh = pt.z;
@@ -226,7 +116,7 @@ int GeneratePath(float (&path)[PATH_SIZE][3], int bbx, int bby, int bbh, int bbw
   for (int i = 0; i < nlayers; i++){
     for(int j = 0; j < IMGW; j++){
       for(int k = 0; k < IMGH; k++){
-        auto& pt2 = pcl_cloud->at(k,j);
+        auto& pt2 = handler.GetPC()->at(k,j);
         if(pow((j - bbx),2) + pow((k - bby),2) <= pow(bbru, 2) && abs(pt2.z - layer_depths[i]) <= h_tol){
           xval = abs(pt2.x - dcx);
           yval = abs(pt2.y - dcy);
@@ -286,15 +176,21 @@ int main (int argc, char *argv[]) {
   // init ros
   ros::init(argc, argv, "read_stereo")  ;
   ros::NodeHandle nh;
-  ros::Subscriber sub = nh.subscribe("/camera/depth/points", 10, cloud_cb);
+  ros::Rate loop_rate(5);
+
+  // comms
+  ros::Subscriber sub = nh.subscribe("/camera/depth/points", 10, &PCHandler::CallbackPC, &handler);
   ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("/planned_path", 1000);
   nav_msgs::Path planned;
-  ros::Rate loop_rate(5);
+
+  // path
   float path[PATH_SIZE][3];
   int size;
+
   static bool first = true;
 
   while (ros::ok()){
+    
     if(!first){
       for (int i = 0; i < size; i++){
         geometry_msgs::PoseStamped p;
@@ -312,16 +208,20 @@ int main (int argc, char *argv[]) {
         planned.poses.push_back(p);
       }
 
-      planned.header.frame_id = "map";
-      planned.header.stamp = ros::Time::now();
-      path_pub.publish(planned);
     }
+
+    planned.header.frame_id = "map";
+    planned.header.stamp = ros::Time::now();
+    path_pub.publish(planned);
+
     // Run callbacks
     ros::spinOnce();
-    if(first){
+
+    if(first && handler.exists){
       size = GeneratePath(path, BBX, BBY, BBH, BBW, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY);
       first = false;
     }
+
     // Wait
     loop_rate.sleep();
   }
