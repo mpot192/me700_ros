@@ -49,7 +49,7 @@ void Cylinder(float r, int n, float h, float cyl[][3]){
   }
 }
 
-int GeneratePath(float (&path)[PATH_SIZE][3], int bbx, int bby, int bbh, int bbw, float r_avoid, float h_layer, float d_cut, float u){
+int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw, float r_avoid, float h_layer, float d_cut, float u){
 
   float bbwu = bbw * u;
   float bbhu = bbh * u; 
@@ -67,6 +67,9 @@ int GeneratePath(float (&path)[PATH_SIZE][3], int bbx, int bby, int bbh, int bbw
 
   float dcx = dcpt.x + drone_pos.pose.pose.position.x;
   float dcy = dcpt.y + drone_pos.pose.pose.position.y;
+  ROS_INFO("GENERATING PATH CENTRED AT [%f, %f]", dcx, dcy);
+  std::ofstream logfile;
+  logfile.open("/home/matt/catkin_ws/bag/pathgen_log.txt");
 
   // cout << "1" << endl;
   ROS_INFO("1");
@@ -146,6 +149,7 @@ int GeneratePath(float (&path)[PATH_SIZE][3], int bbx, int bby, int bbh, int bbw
       }
     }
     layer_r[i] = maxr;
+    ROS_INFO("Layer %d radius: %f", i, maxr);
   }
   // cout << "6" << endl;
 
@@ -169,12 +173,12 @@ int GeneratePath(float (&path)[PATH_SIZE][3], int bbx, int bby, int bbh, int bbw
       pathx[p_size + j] = cyl[j][0] + dcx;
       pathy[p_size + j] = cyl[j][1] + dcy;
       pathz[p_size + j] = cyl[j][2];
-
+      logfile << j << " " << "[" << cyl[j][0] + dcx << ", " << cyl[j][1] + dcy << ", " <<  cyl[j][2]<< "]" << endl;
     }
     p_size += n_points + 1;
     
   }
-
+  logfile.close(); 
   ROS_INFO("7");
   // cout << "_______________" << endl;
   // cout << "7 " << path[1][0] << endl;
@@ -183,7 +187,6 @@ int GeneratePath(float (&path)[PATH_SIZE][3], int bbx, int bby, int bbh, int bbw
     path[1][i] = pathy[i];
     path[2][i] = pathz[i];
     // cout << "[" << path[0][i] << ", " << path[1][i]<< ", " << path[2][i] << "]" << endl;
-    ROS_INFO("[%d] [%f, %f, %f]", i, pathx[i], pathy[i], pathz[i]); 
   }
 
   // cout << "7 " << path[1][0] << endl;
@@ -205,16 +208,17 @@ int main (int argc, char *argv[]) {
   nav_msgs::Path planned;
 
   // path
-  float path[PATH_SIZE][3];
+  float path[3][PATH_SIZE];
   int size;
 
   static bool first = true;
+  static bool done = false; 
 
+  geometry_msgs::PoseStamped p;
   while (ros::ok()){
     
     if(!first){
       for (int i = 0; i < size; i++){
-        geometry_msgs::PoseStamped p;
         p.header.stamp = ros::Time::now();
         p.header.frame_id = "map";
         
@@ -228,7 +232,6 @@ int main (int argc, char *argv[]) {
         p.pose.orientation.w = 1.0;
         planned.poses.push_back(p);
       }
-
     }
 
     planned.header.frame_id = "map";
@@ -241,6 +244,7 @@ int main (int argc, char *argv[]) {
     if(first && handler.exists){
       size = GeneratePath(path, BBX, BBY, BBH, BBW, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY);
       ROS_INFO("Generated path of size: %d!",size);
+      ROS_INFO("PATH [%f, %f, %f]", path[0][0], path[1][0], path[2][0]);
       first = false;
     }
 
