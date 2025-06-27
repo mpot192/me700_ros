@@ -31,6 +31,8 @@ using namespace std;
 #define D_CUT 0.4
 #define UNCERTAINTY 0.9
 
+#define SF 2 // scaling factor to avoid hitting the target with the drone
+               
 bool created_image = false;
 PCHandler handler;
 nav_msgs::Odometry drone_pos;
@@ -67,10 +69,11 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
 
   float dcx = dcpt.x + drone_pos.pose.pose.position.x;
   float dcy = dcpt.y + drone_pos.pose.pose.position.y;
+  float dcz = drone_pos.pose.pose.position.z;
   ROS_INFO("GENERATING PATH CENTRED AT [%f, %f]", dcx, dcy);
   std::ofstream logfile;
   logfile.open("/home/matt/catkin_ws/bag/pathgen_log.txt");
-
+  logfile << "Path centered at: " << dcx << ", " << dcy << endl;
   // cout << "1" << endl;
   ROS_INFO("1");
   if(bbhu < bbwu){
@@ -131,14 +134,17 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     for(int j = 0; j < width; j++){
       for(int k = 0; k < height; k++){
         // ROS_INFO("4.1");
-        if(k == 0 && j == 480){
-          ROS_INFO("i: %d k: %d j: %d height: %d width: %d", i, k, j, height, width);
-        }
+
         auto& pt2 = handler.GetPC()->at(j,k);
         // ROS_INFO("4.2");
         if(pow((j - bbx),2) + pow((k - bby),2) <= pow(bbru, 2) && abs(pt2.z - layer_depths[i]) <= h_tol){
-          xval = abs(pt2.x - dcx);
-          yval = abs(pt2.y - dcy);
+          // xval = abs(abs(pt2.x) - abs(dcx));
+          // yval = abs((pt2.y) - abs(dcy));
+          xval = pt2.x;
+          yval = pt2.y;
+          if(i == 0){
+            ROS_INFO("k: %d j: %d x: %f y: %f", k, j, xval, yval);
+          }
           if (xval > maxr){
             maxr = xval;
           }
@@ -150,6 +156,8 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     }
     layer_r[i] = maxr;
     ROS_INFO("Layer %d radius: %f", i, maxr);
+    logfile << "Layer " << i << " radius: " << maxr << endl;
+    maxr = 0;
   }
   // cout << "6" << endl;
 
@@ -170,9 +178,9 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     Cylinder(r, n_points+1, layer_depths[i], cyl);
     for(int j = 0; j < n_points+1; j++){
       // cout << "[" << cyl[j][0] + dcx << ", " << cyl[j][1] + dcy << ", " << cyl[j][2] << "]" << endl;
-      pathx[p_size + j] = cyl[j][0] + dcx;
-      pathy[p_size + j] = cyl[j][1] + dcy;
-      pathz[p_size + j] = cyl[j][2];
+      pathx[p_size + j] = (cyl[j][0] * SF) + dcx;
+      pathy[p_size + j] = (cyl[j][1] * SF) + dcy;
+      pathz[p_size + j] = (dcz - cyl[j][2]) + 0.3;
       logfile << j << " " << "[" << cyl[j][0] + dcx << ", " << cyl[j][1] + dcy << ", " <<  cyl[j][2]<< "]" << endl;
     }
     p_size += n_points + 1;
