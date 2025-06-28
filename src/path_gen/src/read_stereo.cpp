@@ -31,7 +31,8 @@ using namespace std;
 #define D_CUT 0.4
 #define UNCERTAINTY 0.9
 
-#define SF 2 // scaling factor to avoid hitting the target with the drone
+#define SF 1 // scaling factor to avoid hitting the target with the drone
+#define H_OFFSET 0 
                
 bool created_image = false;
 PCHandler handler;
@@ -180,7 +181,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
       // cout << "[" << cyl[j][0] + dcx << ", " << cyl[j][1] + dcy << ", " << cyl[j][2] << "]" << endl;
       pathx[p_size + j] = (cyl[j][0] * SF) + dcx;
       pathy[p_size + j] = (cyl[j][1] * SF) + dcy;
-      pathz[p_size + j] = (dcz - cyl[j][2]) + 0.3;
+      pathz[p_size + j] = (dcz - cyl[j][2]) + H_OFFSET;
       logfile << j << " " << "[" << cyl[j][0] + dcx << ", " << cyl[j][1] + dcy << ", " <<  cyl[j][2]<< "]" << endl;
     }
     p_size += n_points + 1;

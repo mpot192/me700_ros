@@ -8,7 +8,7 @@
 
 int main(int argc, char **argv){
   ros::init(argc, argv, "hover_origin");
-
+  int count = 0;
   ros::NodeHandle n;
   geometry_msgs::PoseStamped msg;
 
@@ -23,15 +23,21 @@ int main(int argc, char **argv){
     msg.header.frame_id = "map";
     
     // Add current path point to message
-    msg.pose.position.x = -2.65; 
-    msg.pose.position.y = -3.77; 
-    msg.pose.position.z = 5;
+    if(count > 50){
+      msg.pose.position.x = -2.65; 
+      msg.pose.position.y = -3.77; 
+      msg.pose.position.z = 5;
+    } else {
+      msg.pose.position.x = 0; 
+      msg.pose.position.y = 0; 
+      msg.pose.position.z = 5;
+    }
 
     // Add desired orientation quarternion to message
     msg.pose.orientation.x = 0.0;
     msg.pose.orientation.y = 0.0;
     msg.pose.orientation.z = 0.0; 
-    msg.pose.orientation.w = 0.0;
+    msg.pose.orientation.w = 1.0;
 
     // Publish message to desired trajectory topic
     chatter_pub.publish(msg);
@@ -41,6 +47,7 @@ int main(int argc, char **argv){
 
     // Wait
     loop_rate.sleep();
+    count++;
   }
   return 0;
 }
