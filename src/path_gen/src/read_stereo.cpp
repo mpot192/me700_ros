@@ -26,10 +26,10 @@ using namespace std;
 #define BBW 200
 
 // INPUT PARAMETERS
-#define R_AVOID 0.1 
-#define H_LAYER 0.1 
-#define D_CUT 0.4
-#define UNCERTAINTY 0.9
+#define R_AVOID 0.1 // inner radius to avoid cutting
+#define H_LAYER 0.25 // distance between cutting layers 
+#define D_CUT 0.4 // diameter of cutting head
+#define UNCERTAINTY 0.9 // fraction inside bounding box to be used for path generation
 
 #define SF 1 // scaling factor to avoid hitting the target with the drone
 #define H_OFFSET 0 
@@ -37,9 +37,11 @@ using namespace std;
 bool created_image = false;
 PCHandler handler;
 nav_msgs::Odometry drone_pos;
+
 void get_position(const nav_msgs::Odometry& msg){
   drone_pos = msg; 
 }
+
 void Cylinder(float r, int n, float h, float cyl[][3]){
   // float r = diameter/2;
   float dt = (2*M_PI)/(n-1);
@@ -49,6 +51,20 @@ void Cylinder(float r, int n, float h, float cyl[][3]){
     cyl[i][0] = r*cos(i*dt);
     cyl[i][1] = r*sin(i*dt);
     cyl[i][2] = h;
+  }
+}
+
+void Spiral(float r_min, float r_max, int n_points, int n_spiral, float h, float sp[][3]){
+  float dt = (2*M_PI) * (n_spiral/(float)n_points); 
+  float dr = (r_max - r_min)/n_points; 
+
+  // generate spiral (outside -> in)
+  int cnt = 0;
+  for(int i = n_points - 1; i >= 0; i--){
+    sp[cnt][0] = (r_min+dr*i)*cos(i*dt);
+    sp[cnt][1] = (r_min+dr*i)*sin(i*dt);
+    sp[cnt][2] = h;
+    cnt++;
   }
 }
 
@@ -144,7 +160,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
           xval = pt2.x;
           yval = pt2.y;
           if(i == 0){
-            ROS_INFO("k: %d j: %d x: %f y: %f", k, j, xval, yval);
+            // ROS_INFO("k: %d j: %d x: %f y: %f", k, j, xval, yval);
           }
           if (xval > maxr){
             maxr = xval;
@@ -176,7 +192,8 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
       r = R_AVOID;
     }
     // cout << "Radius: " << r << endl; 
-    Cylinder(r, n_points+1, layer_depths[i], cyl);
+    // Cylinder(r, n_points+1, layer_depths[i], cyl);
+    Spiral(R_AVOID, r, n_points+1, 3, layer_depths[i], cyl); 
     for(int j = 0; j < n_points+1; j++){
       // cout << "[" << cyl[j][0] + dcx << ", " << cyl[j][1] + dcy << ", " << cyl[j][2] << "]" << endl;
       pathx[p_size + j] = (cyl[j][0] * SF) + dcx;

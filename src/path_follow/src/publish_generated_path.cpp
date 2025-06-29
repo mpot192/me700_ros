@@ -93,7 +93,7 @@ int main(int argc, char **argv){
       ROS_INFO("RMSE: %.2f",RMSE);
 
       // Move to next index in desired path
-      if (RMSE <= 0.2 && idx < cols){
+      if (RMSE <= 0.05 && idx < cols){
           idx++;
       } else if (idx == cols - 1){
           idx = 0;
@@ -101,7 +101,7 @@ int main(int argc, char **argv){
       }
       
       float norm = sqrt(dx*dx + dy*dy + dz*dz);
-      float set_speed = 0.5; // (m/s)
+      float set_speed = 0.05; // (m/s)
       
       // Uses the drones current position and setpoint to calculate the velocity vector but scaled to set_speed
       vx = (dx/norm) * set_speed;
