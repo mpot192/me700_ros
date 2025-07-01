@@ -4,6 +4,7 @@
 #include "geometry_msgs/TwistStamped.h"
 #include "nav_msgs/Odometry.h"
 #include <nav_msgs/Path.h>
+#include <visualization_msgs/Marker.h>
 #include <sstream>
 #include <cmath>
 #include <eigen3/Eigen/Dense>
@@ -48,6 +49,11 @@ int main(int argc, char **argv) {
     ros::Publisher actual_path_pub = n.advertise<nav_msgs::Path>("/actual_path", 10);
     nav_msgs::Path actual_path;
     actual_path.header.frame_id = "map";
+
+    // Publisher to send position of carrot
+    ros::Publisher carrot_marker_pub = n.advertise<visualization_msgs::Marker>("carrot_marker", 1);
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "map";
 
     // Parameters
     float lookahead_distance = 0.6f; // meters
@@ -169,7 +175,7 @@ int main(int argc, char **argv) {
                     // Calculates how far along the line the carrot is ff the lookahead intersects the path between two points
                     float t = remaining_lookahead / segment_len;
 
-                    // Placing the carrot dere
+                    // Placing the carrot there
                     carrot = p1 + t * (p2 - p1);
                     break;
 
@@ -184,6 +190,34 @@ int main(int argc, char **argv) {
                 carrot = Eigen::Vector3f(path[0][cols - 1], path[1][cols - 1], path[2][cols - 1]);
             }
         }
+
+        // Display carrot!!!
+        marker.header.stamp = ros::Time::now();
+        // Need to define namespaace and id so that carrot can be replaced
+        marker.ns = "carrot";
+        marker.id = 0;
+        marker.type = visualization_msgs::Marker::SPHERE;
+        // Tells RViz to update marker
+        marker.action = visualization_msgs::Marker::ADD;
+
+        marker.pose.position.x = carrot.x();
+        marker.pose.position.y = carrot.y();
+        marker.pose.position.z = carrot.z();
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+
+        marker.scale.x = 0.1;
+        marker.scale.y = 0.1;
+        marker.scale.z = 0.1;
+
+        marker.color.r = 1.0f;
+        marker.color.g = 0.5f;
+        marker.color.b = 0.0f;
+        marker.color.a = 1.0f;
+
+        carrot_marker_pub.publish(marker);
 
         // === VELOCITY COMMAND ===
         Eigen::Vector3f direction_to_carrot = carrot - drone_pos;
