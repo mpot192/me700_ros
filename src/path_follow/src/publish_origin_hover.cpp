@@ -17,6 +17,24 @@ int main(int argc, char **argv){
 
   ros::Rate loop_rate(5);
 
+  int x_offset = 0;
+  int y_offset = 0;
+
+  // for(int i = 0; i < argc; i++){
+  //   ROS_INFO("arg %d: %s ", i, argv[i]);
+  // }
+  std::string arg1 = argv[1];
+  if(arg1 == "top"){
+    y_offset = -5;
+    ROS_INFO("GOING TOP");
+  } else if(arg1 == "left"){
+    x_offset = -5;
+    ROS_INFO("GOING LEFT");
+  } else if(arg1 == "right"){
+    x_offset = 5;
+    ROS_INFO("GOING RIGHT");
+  }
+  
   while (ros::ok()){
     // Add time and frame_id to message
     msg.header.stamp = ros::Time::now();
@@ -24,8 +42,8 @@ int main(int argc, char **argv){
     
     // Add current path point to message
     if(count > 50){
-      msg.pose.position.x = -2.65; 
-      msg.pose.position.y = -3.77; 
+      msg.pose.position.x = -2.65 + x_offset; 
+      msg.pose.position.y = -3.77 + y_offset; 
       msg.pose.position.z = 5;
     } else {
       msg.pose.position.x = 0; 

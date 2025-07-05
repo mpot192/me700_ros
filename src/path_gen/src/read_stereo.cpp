@@ -20,10 +20,10 @@ using namespace std;
 #define IMGD 3
 
 // BOUNDING BOX DEFINITION
-#define BBX 321
-#define BBY 229
-#define BBH 200
-#define BBW 200
+#define BBX 320
+#define BBY 240
+// #define BBH 200
+// #define BBW 200
 
 // INPUT PARAMETERS
 #define R_AVOID 0.1 // inner radius to avoid cutting
@@ -240,6 +240,9 @@ int main (int argc, char *argv[]) {
   static bool first = true;
   static bool done = false; 
 
+  int bb_height = std::atoi(argv[1]);
+  int bb_width = std::atoi(argv[2]);
+
   geometry_msgs::PoseStamped p;
   while (ros::ok()){
     
@@ -268,7 +271,7 @@ int main (int argc, char *argv[]) {
     ros::spinOnce();
 
     if(first && handler.exists){
-      size = GeneratePath(path, BBX, BBY, BBH, BBW, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY);
+      size = GeneratePath(path, BBX, BBY, bb_height, bb_width, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY);
       ROS_INFO("Generated path of size: %d!",size);
       ROS_INFO("PATH [%f, %f, %f]", path[0][0], path[1][0], path[2][0]);
       first = false;

@@ -22,6 +22,18 @@
 	<uri>model://basic_cone</uri>
 	<pose>0 0 0 0 0 0</pose>
     </include>
+    <include>
+    <uri>model://basic_cylinder</uri>
+	<pose>-5 0 0 0 0 0</pose>
+    </include>
+    <include>
+    <uri>model://basic_dome</uri>
+	<pose>5 0 0 0 0 0</pose>
+    </include>
+    <include>
+    <uri>model://random_cone</uri>
+	<pose>0 -5 0 0 0 0</pose>
+    </include>
     <model name='ground_plane'>
       <static>1</static>
       <link name='link'>
