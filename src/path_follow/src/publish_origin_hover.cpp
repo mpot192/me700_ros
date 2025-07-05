@@ -24,9 +24,9 @@ int main(int argc, char **argv){
   //   ROS_INFO("arg %d: %s ", i, argv[i]);
   // }
   std::string arg1 = argv[1];
-  if(arg1 == "top"){
+  if(arg1 == "bottom"){
     y_offset = -5;
-    ROS_INFO("GOING TOP");
+    ROS_INFO("GOING bottom");
   } else if(arg1 == "left"){
     x_offset = -5;
     ROS_INFO("GOING LEFT");
