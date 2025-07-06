@@ -92,7 +92,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   logfile.open("/home/matt/catkin_ws/bag/pathgen_log.txt");
   logfile << "Path centered at: " << dcx << ", " << dcy << endl;
   // cout << "1" << endl;
-  ROS_INFO("1");
+  // ROS_INFO("1");
   if(bbhu < bbwu){
     bbru = bbhu / 2;
   } else {
@@ -100,7 +100,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   }
   // cout << "2 " << endl;
 
-  ROS_INFO("2");
+  // ROS_INFO("2");
   // find max and min height within area of interest
   for(int i = 0; i < width; i++){
     for(int j = 0; j < height; j++){
@@ -124,7 +124,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   // cout << "Min Depth: " << minh << endl;
   // cout << "Max Depth: " << maxh << endl;
 
-  ROS_INFO("3");
+  // ROS_INFO("3");
   starth = minh;
   endh = minh + (maxh - minh)*d_cut;
 
@@ -133,13 +133,44 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
 
   // get layer depths
   int nlayers = ceil((endh-starth)/h_layer);
+  if(nlayers > 1){
+    ROS_INFO("Generating path with %d layers.", nlayers);
+  } /*else{
+    ROS_INFO("Only 1 layer, attempting to estimate height of plant.");
+    // expand to larger area around bounding box to include "ground"
+    int sum = 0;
+    int cnt = 0;
+    int extra = 100;
+    int left = floor(bbx - (bbw/2) - extra);
+    int right = floor(bbx + (bbw/2) + extra);
+    int top = floor(bby - (bbh/2) - extra);
+    int bottom = floor(bby + (bbh/2) + extra);
+    if(left < 0) left = 0;
+    if(right > width) right = width;
+    if(top < 0) top = 0;
+    if(bottom > height) bottom = height;
+    for(int i = left; i < right; i++){
+      for(int j = top; j < bottom; j++){
+        auto& pt = handler.GetPC()->at(i,j);
+        sum+= pt.z - minh;
+        cnt++;
+      }
+    }
+    // get average height diff to estimate height
+    maxh = sum/cnt;
+    ROS_INFO("Estimated height: %fm", maxh);
+    endh = minh + (maxh - minh)*d_cut;
+    nlayers = ceil((endh-starth)/h_layer);
+    ROS_INFO("Updated: generating path with %d layers.", nlayers);
+  }*/
+
   float layer_depths[nlayers];
   for(int i = 0; i < nlayers; i++){
     layer_depths[i] = starth + h_layer*i;
   }
 
 
-  ROS_INFO("4");
+  // ROS_INFO("4");
   // cout << "5" << endl;
   // estimate diameter at each layer
   float h_tol = 0.01;
@@ -171,14 +202,18 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
         }
       }
     }
-    layer_r[i] = maxr;
+    if(i != 0 && maxr == 0){
+      layer_r[i] = layer_r[i-1];
+    } else{
+      layer_r[i] = maxr;
+    }
     ROS_INFO("Layer %d radius: %f", i, maxr);
     logfile << "Layer " << i << " radius: " << maxr << endl;
     maxr = 0;
   }
   // cout << "6" << endl;
 
-  ROS_INFO("5");
+  // ROS_INFO("5");
   int n_points = 20;
   float cyl[n_points+1][3];
   float pathx[PATH_SIZE];
@@ -205,7 +240,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     
   }
   logfile.close(); 
-  ROS_INFO("7");
+  // ROS_INFO("7");
   // cout << "_______________" << endl;
   // cout << "7 " << path[1][0] << endl;
   for(int  i = 0; i<p_size;i++){
@@ -217,7 +252,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
 
   // cout << "7 " << path[1][0] << endl;
   
-  ROS_INFO("8");
+  // ROS_INFO("8");
   return p_size;
 }
 
@@ -239,6 +274,13 @@ int main (int argc, char *argv[]) {
 
   static bool first = true;
   static bool done = false; 
+
+  
+  if (argc < 2) {
+      ROS_ERROR("Missing required command line arguments <bounding box height> <bounding box width>");
+      ros::shutdown(); 
+      return -1;      
+  }
 
   int bb_height = std::atoi(argv[1]);
   int bb_width = std::atoi(argv[2]);

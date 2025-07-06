@@ -23,18 +23,25 @@ int main(int argc, char **argv){
   // for(int i = 0; i < argc; i++){
   //   ROS_INFO("arg %d: %s ", i, argv[i]);
   // }
-  std::string arg1 = argv[1];
-  if(arg1 == "bottom"){
-    y_offset = -5;
-    ROS_INFO("GOING bottom");
-  } else if(arg1 == "left"){
-    x_offset = -5;
-    ROS_INFO("GOING LEFT");
-  } else if(arg1 == "right"){
-    x_offset = 5;
-    ROS_INFO("GOING RIGHT");
-  }
-  
+  if(argc == 3){
+    std::string arg1 = argv[1];
+    std::string arg2 = argv[2];
+    x_offset = std::stof(arg1);
+    y_offset = std::stof(arg2);
+    ROS_INFO("Hovering above [%f, %f].", std::stof(arg1), std::stof(arg2));
+  } else if(argc == 2){ 
+    std::string arg1 = argv[1];
+    if(arg1 == "bottom"){
+      y_offset = -5;
+      ROS_INFO("GOING BOTTOMj");
+    } else if(arg1 == "left"){
+      x_offset = -5;
+      ROS_INFO("GOING LEFT");
+    } else if(arg1 == "right"){
+      x_offset = 5;
+      ROS_INFO("GOING RIGHT");
+    }
+  } 
   while (ros::ok()){
     // Add time and frame_id to message
     msg.header.stamp = ros::Time::now();
