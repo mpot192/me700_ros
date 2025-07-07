@@ -265,7 +265,8 @@ int main (int argc, char *argv[]) {
   // comms
   ros::Subscriber sub = nh.subscribe("/camera/depth/points", 10, &PCHandler::CallbackPC, &handler);
   ros::Subscriber pos = nh.subscribe("/mavros/global_position/local", 10, get_position);
-  ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("/planned_path", 1000);
+  ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("/path_gen/planned_path", 1000);
+  ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/path_gen/depth_model", 1000);
   nav_msgs::Path planned;
 
   // path
@@ -303,17 +304,20 @@ int main (int argc, char *argv[]) {
         p.pose.orientation.w = 1.0;
         planned.poses.push_back(p);
       }
+    
+
+      cloud_pub.publish(handler.GetModelPC());
     }
 
     planned.header.frame_id = "map";
     planned.header.stamp = ros::Time::now();
     path_pub.publish(planned);
-
     // Run callbacks
     ros::spinOnce();
 
     if(first && handler.exists){
       size = GeneratePath(path, BBX, BBY, bb_height, bb_width, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY);
+      handler.GenerateModelPC(drone_pos.pose.pose.position.x, drone_pos.pose.pose.position.y, drone_pos.pose.pose.position.z);
       ROS_INFO("Generated path of size: %d!",size);
       ROS_INFO("PATH [%f, %f, %f]", path[0][0], path[1][0], path[2][0]);
       first = false;

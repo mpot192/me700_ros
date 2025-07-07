@@ -13,10 +13,14 @@ class PCHandler {
   public:
     PCHandler();
     ~PCHandler();
-    pcl::PointCloud<pcl::PointXYZ>::Ptr GetPC();
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr GetPC();
     void CallbackPC(const sensor_msgs::PointCloud2ConstPtr& cloud);
+    void GenerateModelPC(float x_pos, float y_pos, float z_pos);
+    sensor_msgs::PointCloud2ConstPtr GetModelPC();
     bool exists = false;
   private:
-    pcl::PointCloud<pcl::PointXYZ>::Ptr PC_;
+    sensor_msgs::PointCloud2::Ptr model_pc_;
+    bool generated = false;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr PC_;
 };
 #endif // !PCHANDLER_HPP
