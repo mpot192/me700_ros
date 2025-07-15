@@ -25,6 +25,11 @@ float dist3D(float x1, float y1, float z1, float x2, float y2, float z2);
 
 bool FollowCarrotLayer(const double path_layer[3][182], int layer_size, const Eigen::Vector3f& drone_pos, Eigen::Vector3f& carrot, bool& layer_completed, bool& reached_first_point){
         
+
+    static Eigen::Vector3f prev_carrot(0, 0, 0);
+    static bool first_carrot_set = false;      
+    float max_carrot_jump = 0.6f; // Max carrot movement per iteration (meters)
+
     // PHASE 1: Go to first point
     if (!reached_first_point) {
         carrot = Eigen::Vector3f(path_layer[0][0], path_layer[1][0], path_layer[2][0]);
@@ -36,6 +41,13 @@ bool FollowCarrotLayer(const double path_layer[3][182], int layer_size, const Ei
         }
 
         layer_completed = false;
+
+        // Initialize carrot memory
+        if (!first_carrot_set) {
+            prev_carrot = carrot;
+            first_carrot_set = true;
+        }
+
         return true;
     }   
 
@@ -96,6 +108,28 @@ bool FollowCarrotLayer(const double path_layer[3][182], int layer_size, const Ei
             carrot = Eigen::Vector3f(path_layer[0][layer_size  - 1], path_layer[1][layer_size  - 1], path_layer[2][layer_size  - 1]);
         }
 
+        // Memory element
+        float jump_dist = (carrot - prev_carrot).norm();
+        // Carrot jumps too much:
+        if (jump_dist > max_carrot_jump){
+            // Keep carrot in same position
+            carrot = prev_carrot;
+        }
+
+        prev_carrot = carrot; // Store current carrot into prev for next iteration
+
+
+        // if(!first_carrot_set){
+        //     prev_carrot = carrot;
+        //     first_carrot_set = true;
+        // }else{
+        //     float jump_dist = (carrot - prev_carrot).norm();
+        //     if  (jump_dist > max_carrot_jump){
+
+        //     }
+        // }
+
+        // Check if layer is complete
         float dist_to_last_point = (carrot - drone_pos).norm();
 
         if (dist_to_last_point < 0.05){
