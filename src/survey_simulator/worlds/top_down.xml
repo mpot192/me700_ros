@@ -38,6 +38,10 @@
     <uri>model://basic_plant</uri>
 	<pose>0 -10 0 1.571 0 0</pose>
     </include>
+    <include>
+    <uri>model://solanum</uri>
+	<pose>5 -10 0 1.571 0 0</pose>
+    </include>
     <model name='ground_plane'>
       <static>1</static>
       <link name='link'>

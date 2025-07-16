@@ -44,7 +44,7 @@ int main(int argc, char **argv){
   // Subscriber to currrent odom (publishes the drones local position by MAVROS)
   ros::Subscriber pos_sub = n.subscribe("/mavros/global_position/local", 1000, odomCallback);
   // Subscriber to generated path
-  ros::Subscriber path_sub = n.subscribe("/planned_path", 1000, pathCallback);
+  ros::Subscriber path_sub = n.subscribe("/path_gen/planned_path", 1000, pathCallback);
 
   // for publishing the actual path followed
   ros::Publisher followed_pub = n.advertise<nav_msgs::Path>("/followed_path", 1000);
