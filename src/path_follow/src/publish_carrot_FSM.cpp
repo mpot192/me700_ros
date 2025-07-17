@@ -13,10 +13,16 @@
 
 nav_msgs::Odometry drone_odom;
 bool run = false;
-float lookahead_distance = 0.5f; // meters
+float lookahead_distance = 0.3f; // meters
+float max_carrot_jump = 0.325f; // Max carrot movement per iteration (meters)
 int current_layer_idx = 0;
 bool reached_first_point = false;
 int col_size;
+bool near_end;
+int last_closest_idx = 0;
+
+bool first_carrot_set = false;
+Eigen::Vector3f prev_carrot(0,0,0);
 
 float dist3D(float x1, float y1, float z1, float x2, float y2, float z2);
 
@@ -26,16 +32,16 @@ float dist3D(float x1, float y1, float z1, float x2, float y2, float z2);
 bool FollowCarrotLayer(const double path_layer[3][182], int layer_size, const Eigen::Vector3f& drone_pos, Eigen::Vector3f& carrot, bool& layer_completed, bool& reached_first_point){
         
 
-    static Eigen::Vector3f prev_carrot(0, 0, 0);
-    static bool first_carrot_set = false;      
-    float max_carrot_jump = 0.6f; // Max carrot movement per iteration (meters)
+    // Eigen::Vector3f prev_carrot(0, 0, 0);
+    // bool first_carrot_set = false;
+    
 
     // PHASE 1: Go to first point
     if (!reached_first_point) {
         carrot = Eigen::Vector3f(path_layer[0][0], path_layer[1][0], path_layer[2][0]);
         float dist = (carrot - drone_pos).norm();
 
-        if (dist < 0.1) {
+        if (dist < 0.15) {
             reached_first_point = true;
             ROS_INFO("Reached first waypoint of layer. Switching to carrot-following.");
         }
@@ -48,17 +54,23 @@ bool FollowCarrotLayer(const double path_layer[3][182], int layer_size, const Ei
             first_carrot_set = true;
         }
 
+        last_closest_idx = 0; // Reset index when starting the layer ///////////////
+
         return true;
-    }   
+    }
 
         // PHASE 2: Arc-length carrot following with interpolation
     else {
 
-        // 1. Find closest point on path
+        // 1. Find closest point on path (but it is limited with a window MAX 5 index jump)
+        int search_start = std::max(0, last_closest_idx - 5);   // Allow small backward correction
+        int search_end   = std::min(layer_size - 1, last_closest_idx + 20); // Lookahead window
+
         float min_dist = 10000; // Just a large number for now
         int closest_idx = 0;
 
-        for (int i = 0; i < layer_size; ++i) {
+        for (int i = search_start; i < search_end; ++i) {
+        // for (int i = 0; i < layer_size; ++i) {
 
             // Finding distance between drone and waypoints
             float dist = dist3D(
@@ -74,6 +86,7 @@ bool FollowCarrotLayer(const double path_layer[3][182], int layer_size, const Ei
                 closest_idx = i;
             }
         }
+        last_closest_idx = closest_idx; // Update memory for next iteration
 
         ROS_INFO_THROTTLE(1,"Closest point: [%.2f, %.2f, %.2f]", path_layer[0][closest_idx], path_layer[1][closest_idx], path_layer[2][closest_idx]);
 
@@ -103,41 +116,62 @@ bool FollowCarrotLayer(const double path_layer[3][182], int layer_size, const Ei
             }
         }
 
-        // If the closest point is at the last point, just place the carrot there
-        if (j >= layer_size - 1) { //cols
-            carrot = Eigen::Vector3f(path_layer[0][layer_size  - 1], path_layer[1][layer_size  - 1], path_layer[2][layer_size  - 1]);
+        // Force carrot to last point if we are beyond the last segment
+        Eigen::Vector3f last_point(path_layer[0][layer_size - 1],
+                                path_layer[1][layer_size - 1],
+                                path_layer[2][layer_size - 1]);
+        if (j >= layer_size - 1) {
+            carrot = last_point;
         }
 
-        // Memory element
-        float jump_dist = (carrot - prev_carrot).norm();
-        // Carrot jumps too much:
-        if (jump_dist > max_carrot_jump){
-            // Keep carrot in same position
-            carrot = prev_carrot;
-        }
-
-        prev_carrot = carrot; // Store current carrot into prev for next iteration
-
-
-        // if(!first_carrot_set){
-        //     prev_carrot = carrot;
-        //     first_carrot_set = true;
-        // }else{
-        //     float jump_dist = (carrot - prev_carrot).norm();
-        //     if  (jump_dist > max_carrot_jump){
-
-        //     }
+        // // If the closest point is at the last point, just place the carrot there
+        // if (j >= layer_size - 1) { //cols
+        //     carrot = Eigen::Vector3f(path_layer[0][layer_size  - 1], path_layer[1][layer_size  - 1], path_layer[2][layer_size  - 1]);
         // }
 
-        // Check if layer is complete
-        float dist_to_last_point = (carrot - drone_pos).norm();
+        if (!first_carrot_set) {
+            prev_carrot = carrot;
+            first_carrot_set = true;
+        }else{
 
-        if (dist_to_last_point < 0.05){
-            layer_completed = true;
-        }else {
-            layer_completed = false;
+            // Memory element
+            float jump_dist = (carrot - prev_carrot).norm();
+            // if Carrot jumps too much:
+            if (jump_dist > max_carrot_jump){
+                // Keep carrot in same position
+                carrot = prev_carrot;
+            }
         }
+        prev_carrot = carrot; // Store current carrot into prev for next iteration
+
+        // Check if near the last point AND near the end of the path
+        float dist_to_last_point = (last_point - drone_pos).norm();
+
+        // Condition 1: We're very close to the last waypoint
+        bool close_to_last_point = (dist_to_last_point < 0.10f);
+
+        // Condition 2: We've progressed far along the path
+        if (j >= layer_size - 2){
+            near_end = true;
+        }
+        // near_end = (j >= layer_size - 2 || closest_idx > layer_size * 0.8);
+
+        // Final check
+        layer_completed = (near_end && close_to_last_point);
+
         return true;
+
+        // Check if layer is complete
+        // float dist_to_last_point = (carrot - drone_pos).norm(); // carrot   
+
+        // float dist_to_last_point = (last_point - drone_pos).norm();
+
+        // if (dist_to_last_point < 0.10){
+        //     layer_completed = true;
+        // }else {
+        //     layer_completed = false;
+        // }
+        // return true;
     }
     return true;
 }
@@ -188,7 +222,7 @@ int main(int argc, char **argv) {
 
     // Parameters
     // float lookahead_distance = 0.6f; // meters
-    float set_speed = 0.3;  // m/s
+    float set_speed = 0.25;  // m/s
     bool reached_first_point = false;
 
     // Path setup
@@ -333,6 +367,8 @@ int main(int argc, char **argv) {
                 if (current_layer_idx < num_of_layers){
                     current_layer_idx++;
                     reached_first_point = false;
+                    near_end = false; 
+                    first_carrot_set = false;  // Reset memory for new layer
                     ROS_INFO("Switching to next layer: %d", current_layer_idx);
                 }else{
                     ROS_INFO("All layers completed.");
@@ -342,77 +378,6 @@ int main(int argc, char **argv) {
 
             }
         }
-
-        /////////////////////////////////////////////////
-        /////////////////////////////////////////////////  STUFF ON THE BOTTOM SHOULD BE REPLACED
-        // PHASE 1: Go to first point
-        // if (!reached_first_point) {
-        //     carrot = Eigen::Vector3f(path[0][0], path[1][0], path[2][0]);
-        //     float dist = (carrot - drone_pos).norm();
-
-        //     if (dist < 0.1) {
-        //         reached_first_point = true;
-        //         ROS_INFO("Reached first waypoint. Switching to carrot-following.");
-        //     }
-        // }
-
-        // // PHASE 2: Arc-length carrot following with interpolation
-        // else {
-
-        //     // 1. Find closest point on path
-        //     float min_dist = 10000; // Just a large number for now
-        //     int closest_idx = 0;
-        //     for (int i = 0; i < cols; ++i) {
-
-        //         // Finding distance between drone and waypoints
-        //         float dist = dist3D(
-        //             drone_odom.pose.pose.position.x,
-        //             drone_odom.pose.pose.position.y,
-        //             drone_odom.pose.pose.position.z,
-        //             path[0][i], path[1][i], path[2][i]
-        //         );
-
-        //         // Finding the index of the point thats closest to the drone
-        //         if (dist < min_dist) {
-        //             min_dist = dist;
-        //             closest_idx = i;
-        //         }
-        //     }
-
-        //     ROS_INFO_THROTTLE(1,"Closest point: [%.2f, %.2f, %.2f]", path[0][closest_idx], path[1][closest_idx], path[2][closest_idx]);
-
-        //     // 2. Walk forward along path to find carrot using interpolation
-        //     float remaining_lookahead = lookahead_distance;
-        //     int j = closest_idx;
-
-        //     while (j < cols - 1) {
-        //         Eigen::Vector3f p1(path[0][j], path[1][j], path[2][j]);
-        //         Eigen::Vector3f p2(path[0][j+1], path[1][j+1], path[2][j+1]);
-
-        //         // draws a linear line between two points 
-        //         float segment_len = (p2 - p1).norm();
-
-        //         if (segment_len >= remaining_lookahead) {
-        //             // Calculates how far along the line the carrot is ff the lookahead intersects the path between two points
-        //             float t = remaining_lookahead / segment_len;
-
-        //             // Placing the carrot there
-        //             carrot = p1 + t * (p2 - p1);
-        //             break;
-
-        //         } else {
-        //             remaining_lookahead -= segment_len;
-        //             j++; // ++i;
-        //         }
-        //     }
-
-        //     // If the closest point is at the last point, just place the carrot there
-        //     if (j >= cols - 1) {
-        //         carrot = Eigen::Vector3f(path[0][cols - 1], path[1][cols - 1], path[2][cols - 1]);
-        //     }
-        // }
-        /////////////////////////////////////////////////
-        /////////////////////////////////////////////////
 
 
         // Display carrot!!!
