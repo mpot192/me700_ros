@@ -8,14 +8,21 @@
 
 // I know this is not ideal but im just making it work for now
 nav_msgs::Odometry drone_odom;
+nav_msgs::Path path;
 bool run = false;
+bool got_path = false;
+int cols;
 
 void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
   // ROS_INFO("yo: [%f, %f, %f]", msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
   drone_odom = *msg;
   run = true;
 }
-
+void pathCallback(const nav_msgs::Path::ConstPtr& msg){
+  path = *msg;
+  cols = path.poses.size();
+  got_path = true;
+}
 float GetRMSE(float des_pos[3]){
   return sqrt((pow(drone_odom.pose.pose.position.x - des_pos[0], 2) + pow(drone_odom.pose.pose.position.y - des_pos[1], 2) + pow(drone_odom.pose.pose.position.z - des_pos[2], 2))/3);
 }
@@ -28,9 +35,12 @@ int main(int argc, char **argv){
 
   // Publisher to send target position
   ros::Publisher chatter_pub = n.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 1000);
-  ros::Publisher path_pub = n.advertise<nav_msgs::Path>("/planned_path", 1000);
+  ros::Subscriber path_sub = n.subscribe("/path_gen/planned_path", 1000, pathCallback);
   // Subscriber to currrent odom
   ros::Subscriber pos_sub = n.subscribe("/mavros/global_position/local", 1000, odomCallback);
+  ros::Publisher followed_pub = n.advertise<nav_msgs::Path>("/followed_path", 1000);
+  nav_msgs::Path follow;
+
   ros::Rate loop_rate(5);
 
   long count = 0;
@@ -41,68 +51,89 @@ int main(int argc, char **argv){
   const int rows = 3;
   const int cols = 182;
   // Desired path 
-  double path[rows][cols] = {{3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.12041, 3.22457, 3.29839, 3.33191, 3.32061, 3.26601, 3.17548, 3.06125, 2.93875, 2.82452, 2.73399, 2.67939, 2.66809, 2.70161, 2.77543, 2.87959, 3, 3, 3.06021, 3.11228, 3.14919, 3.16596, 3.1603, 3.133, 3.08774, 3.03062, 2.96938, 2.91226, 2.867, 2.8397, 2.83404, 2.85081, 2.88772, 2.93979, 3, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3},{3, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.33333, 3.31082, 3.24634, 3.14858, 3.03076, 2.90878, 2.79912, 2.71659, 2.67234, 2.67234, 2.71659, 2.79912, 2.90878, 3.03076, 3.14858, 3.24634, 3.31082, 3.33333, 3.16667, 3.15541, 3.12317, 3.07429, 3.01538, 2.95439, 2.89956, 2.8583, 2.83617, 2.83617, 2.8583, 2.89956, 2.95439, 3.01538, 3.07429, 3.12317, 3.15541, 3.16667, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5},{3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}};
   float current_path[3]; 
   nav_msgs::Path planned;
-
+  geometry_msgs::PoseStamped p;
   while (ros::ok()){
     
     if(run) ROS_INFO("yo: [%f, %f, %f]", drone_odom.pose.pose.position.x, drone_odom.pose.pose.position.y, drone_odom.pose.pose.position.z);
+    if(got_path){
+      // Get target point
+      current_path[0] = path.poses[idx].pose.position.x;
+      current_path[1] = path.poses[idx].pose.position.y;
+      current_path[2] = path.poses[idx].pose.position.z;
 
-    current_path[0] = path[0][idx];
-    current_path[1] = path[1][idx];
-    current_path[2] = path[2][idx];
-
-  
-    RMSE = GetRMSE(current_path);
-
-    ROS_INFO("RMSE: %.2f",RMSE);
-
-    // Move to next index in desired path
-    if (RMSE <= 0.2 && idx < cols){
-        idx++;
-    } else if (idx == cols - 1){
-        idx = 0;
-        count = 0;
-    }
-
-    // Add time and frame_id to message
-    msg.header.stamp = ros::Time::now();
-    msg.header.frame_id = "map";
     
-    // Add current path point to message
-    msg.pose.position.x = path[0][idx];
-    msg.pose.position.y = path[1][idx];
-    msg.pose.position.z = path[2][idx];
+      RMSE = GetRMSE(current_path);
 
-    // Add desired orientation quarternion to message
-    msg.pose.orientation.x = 0.0;
-    msg.pose.orientation.y = 0.0;
-    msg.pose.orientation.z = 0.0; 
-    msg.pose.orientation.w = 1.0;
+      ROS_INFO("RMSE: %.2f",RMSE);
 
-    // Publish message to desired trajectory topic
-    chatter_pub.publish(msg);
+      // Move to next index in desired path
+      if (RMSE <= 0.2 && idx < cols){
+          idx++;
+          current_path[0] = path.poses[idx].pose.position.x;
+          current_path[1] = path.poses[idx].pose.position.y;
+          current_path[2] = path.poses[idx].pose.position.z;
+      } else if (idx == cols - 1){
+          idx = 0;
+          count = 0;
+      }
 
-    for (int i = 0; i < cols; i++){
-      geometry_msgs::PoseStamped p;
-      p.header.stamp = ros::Time::now();
-      p.header.frame_id = "map";
+      // Add time and frame_id to message
+      msg.header.stamp = ros::Time::now();
+      msg.header.frame_id = "map";
       
-      p.pose.position.x = path[0][i];
-      p.pose.position.y = path[1][i];
-      p.pose.position.z = path[2][i];
+      // Add current path point to message
+      msg.pose.position.x = current_path[0];
+      msg.pose.position.y = current_path[1];
+      msg.pose.position.z = current_path[2];
 
-      p.pose.orientation.x = 0.0;
-      p.pose.orientation.y = 0.0;
-      p.pose.orientation.z = 0.0; 
-      p.pose.orientation.w = 1.0;
-      planned.poses.push_back(p);
+      // Add desired orientation quarternion to message
+      msg.pose.orientation.x = 0.0;
+      msg.pose.orientation.y = 0.0;
+      msg.pose.orientation.z = 0.0; 
+      msg.pose.orientation.w = 1.0;
+
+      // Publish message to desired trajectory topic
+      chatter_pub.publish(msg);
+    }
+    for (int i = 0; i < cols; i++){
+      geometry_msgs::PoseStamped p2;
+      p2.header.stamp = ros::Time::now();
+      p2.header.frame_id = "map";
+      
+      p2.pose.position.x = current_path[0];
+      p2.pose.position.y = current_path[1];
+      p2.pose.position.z = current_path[2];
+
+      p2.pose.orientation.x = 0.0;
+      p2.pose.orientation.y = 0.0;
+      p2.pose.orientation.z = 0.0; 
+      p2.pose.orientation.w = 1.0;
+      planned.poses.push_back(p2);
     }
 
     planned.header.frame_id = "map";
     planned.header.stamp = ros::Time::now();
-    path_pub.publish(planned);
+    // path_pub.publish(planned);
+    // Track path
+    p.header.stamp = ros::Time::now();
+    p.header.frame_id = "map";
+    
+    p.pose.position.x = drone_odom.pose.pose.position.x;
+    p.pose.position.y = drone_odom.pose.pose.position.y;
+    p.pose.position.z = drone_odom.pose.pose.position.z;
+
+    p.pose.orientation.x = 0.0;
+    p.pose.orientation.y = 0.0;
+    p.pose.orientation.z = 0.0; 
+    p.pose.orientation.w = 1.0;
+    follow.poses.push_back(p);
+    follow.header.frame_id = "map";
+    follow.header.stamp = ros::Time::now();
+
+    followed_pub.publish(follow);    
+
     // Run callbacks
     ros::spinOnce();
 

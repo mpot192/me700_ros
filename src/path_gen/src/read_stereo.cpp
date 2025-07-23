@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define PATH_SIZE 200
+#define PATH_SIZE 1000
 
 // IMG PARAMETERS
 #define IMGH 480
@@ -214,7 +214,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   // cout << "6" << endl;
 
   // ROS_INFO("5");
-  int n_points = 20;
+  int n_points = 50;
   float cyl[n_points+1][3];
   float pathx[PATH_SIZE];
   float pathy[PATH_SIZE];
@@ -239,7 +239,6 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     p_size += n_points + 1;
     
   }
-  logfile.close(); 
   // ROS_INFO("7");
   // cout << "_______________" << endl;
   // cout << "7 " << path[1][0] << endl;
@@ -252,6 +251,24 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
 
   // cout << "7 " << path[1][0] << endl;
   
+  logfile << "Path size = " << p_size << endl;
+  logfile << "{";
+  for(int i = 0; i < 3;i++){
+    logfile << "{";
+    for(int j = 0; j < p_size; j++){
+      logfile << path[i][j];
+      if(j != p_size - 1){
+        logfile << ",";
+      }
+    }
+    logfile << "}";
+    if(i != 2){
+      logfile << ",";
+    }
+  }
+  logfile << "}";
+  logfile << endl << "ivan sux" << endl;
+  logfile.close(); 
   // ROS_INFO("8");
   return p_size;
 }
