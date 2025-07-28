@@ -13,8 +13,8 @@
 
 nav_msgs::Odometry drone_odom;
 bool run = false;
-float lookahead_distance = 0.125f; // meters /0.3f balls 0.06
-float max_carrot_jump = 0.225f; // Max carrot movement per iteration (meters) /0.325f 0.0625
+float lookahead_distance = 0.125f; // meters / 0.125 hi
+float max_carrot_jump = 0.225f; // Max carrot movement per iteration (meters) / 0.225 hi
 int current_layer_idx = 0;
 bool reached_first_point = false;
 int col_size;
@@ -149,8 +149,7 @@ bool FollowCarrotLayer(const double path_layer[3][153], int layer_size, const Ei
         float dist_to_last_point = (last_point - drone_pos).norm();
 
         // Condition 1: We're very close to the last waypoint
-        bool close_to_last_point = (dist_to_last_point < 0.05f); // 0.1 balls , 0.025
-
+        bool close_to_last_point = (dist_to_last_point < 0.05f); // 0.05 hi
         // Condition 2: We've progressed far along the path
         if (j >= layer_size - 2){
             near_end = true;
@@ -223,8 +222,8 @@ int main(int argc, char **argv) {
 
     // Parameters
     // float lookahead_distance = 0.6f; // meters
-    float set_speed = 0.18;  // m/s // 0.25 balls 0.1 0.13
-    float set_speed_fast = 0.13; //0.2
+    float set_speed = 0.18;  // m/s // 0.18 hi
+    float set_speed_fast = 0.13; //0.13 
     bool reached_first_point = false;
 
     // Path setup
