@@ -19,11 +19,9 @@ using namespace std;
 #define IMGW 640
 #define IMGD 3
 
-// BOUNDING BOX DEFINITION
-#define BBX 320
+// BOUNDING BOX CENTRE POSITION DEFINITION
+#define BBX 320 
 #define BBY 240
-// #define BBH 200
-// #define BBW 200
 
 // INPUT PARAMETERS
 #define R_AVOID 0.1 // inner radius to avoid cutting
@@ -31,10 +29,9 @@ using namespace std;
 #define D_CUT 0.4 // diameter of cutting head
 #define UNCERTAINTY 0.9 // fraction inside bounding box to be used for path generation
 
-#define SF 1 // scaling factor to avoid hitting the target with the drone
-#define H_OFFSET 0 
+#define SF 1 // scaling factor for path to avoid hitting the target with the drone
+#define H_OFFSET 0 // z offset for drone position if required
                
-bool created_image = false;
 PCHandler handler;
 nav_msgs::Odometry drone_pos;
 
@@ -42,6 +39,7 @@ void get_position(const nav_msgs::Odometry& msg){
   drone_pos = msg; 
 }
 
+// generate a circle based on input parameters
 void Cylinder(float r, int n, float h, float cyl[][3]){
   // float r = diameter/2;
   float dt = (2*M_PI)/(n-1);
@@ -54,6 +52,7 @@ void Cylinder(float r, int n, float h, float cyl[][3]){
   }
 }
 
+// generate a spiral based on input parameters
 void Spiral(float r_min, float r_max, int n_points, int n_spiral, float h, float sp[][3]){
   float dt = (2*M_PI) * (n_spiral/(float)n_points); 
   float dr = (r_max - r_min)/n_points; 
@@ -70,7 +69,7 @@ void Spiral(float r_min, float r_max, int n_points, int n_spiral, float h, float
 
 int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw, float r_avoid, float h_layer, float d_cut, float u){
 
-  float bbwu = bbw * u;
+  float bbwu = bbw * u; // scale bounding box to uncertainty
   float bbhu = bbh * u; 
   float bbru;
   int sz = 0;
@@ -79,28 +78,31 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   float starth;
   float endh;
 
+  // get width and height of point cloud from depth camera
   int width = handler.GetPC()->width;
   int height = handler.GetPC()->height;
 
+  // get centre point of point cloud 
   auto& dcpt = handler.GetPC()->at(bbx,bby);
 
+  // put in terms of absolute position
   float dcx = dcpt.x + drone_pos.pose.pose.position.x;
   float dcy = dcpt.y + drone_pos.pose.pose.position.y;
   float dcz = drone_pos.pose.pose.position.z;
+
   ROS_INFO("GENERATING PATH CENTRED AT [%f, %f]", dcx, dcy);
   std::ofstream logfile;
   logfile.open("/home/matt/catkin_ws/bag/pathgen_log.txt");
   logfile << "Path centered at: " << dcx << ", " << dcy << endl;
-  // cout << "1" << endl;
-  // ROS_INFO("1");
+
+  // fit circle within 
   if(bbhu < bbwu){
     bbru = bbhu / 2;
   } else {
     bbru = bbwu / 2;
   }
-  // cout << "2 " << endl;
 
-  // ROS_INFO("2");
+
   // find max and min height within area of interest
   for(int i = 0; i < width; i++){
     for(int j = 0; j < height; j++){
@@ -121,57 +123,22 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
       }
     }
   }
-  // cout << "Min Depth: " << minh << endl;
-  // cout << "Max Depth: " << maxh << endl;
 
-  // ROS_INFO("3");
+  // start at min depth
   starth = minh;
   endh = minh + (maxh - minh)*d_cut;
-
-  
-  // cout << "4" << endl;
 
   // get layer depths
   int nlayers = ceil((endh-starth)/h_layer);
   if(nlayers > 1){
     ROS_INFO("Generating path with %d layers.", nlayers);
-  } /*else{
-    ROS_INFO("Only 1 layer, attempting to estimate height of plant.");
-    // expand to larger area around bounding box to include "ground"
-    int sum = 0;
-    int cnt = 0;
-    int extra = 100;
-    int left = floor(bbx - (bbw/2) - extra);
-    int right = floor(bbx + (bbw/2) + extra);
-    int top = floor(bby - (bbh/2) - extra);
-    int bottom = floor(bby + (bbh/2) + extra);
-    if(left < 0) left = 0;
-    if(right > width) right = width;
-    if(top < 0) top = 0;
-    if(bottom > height) bottom = height;
-    for(int i = left; i < right; i++){
-      for(int j = top; j < bottom; j++){
-        auto& pt = handler.GetPC()->at(i,j);
-        sum+= pt.z - minh;
-        cnt++;
-      }
-    }
-    // get average height diff to estimate height
-    maxh = sum/cnt;
-    ROS_INFO("Estimated height: %fm", maxh);
-    endh = minh + (maxh - minh)*d_cut;
-    nlayers = ceil((endh-starth)/h_layer);
-    ROS_INFO("Updated: generating path with %d layers.", nlayers);
-  }*/
+  } 
 
   float layer_depths[nlayers];
   for(int i = 0; i < nlayers; i++){
     layer_depths[i] = starth + h_layer*i;
   }
 
-
-  // ROS_INFO("4");
-  // cout << "5" << endl;
   // estimate diameter at each layer
   float h_tol = 0.01;
   float xval;
@@ -181,17 +148,12 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   for (int i = 0; i < nlayers; i++){
     for(int j = 0; j < width; j++){
       for(int k = 0; k < height; k++){
-        // ROS_INFO("4.1");
-
         auto& pt2 = handler.GetPC()->at(j,k);
-        // ROS_INFO("4.2");
+        // if within fit circle, consider for max radius
         if(pow((j - bbx),2) + pow((k - bby),2) <= pow(bbru, 2) && abs(pt2.z - layer_depths[i]) <= h_tol){
-          // xval = abs(abs(pt2.x) - abs(dcx));
-          // yval = abs((pt2.y) - abs(dcy));
           xval = pt2.x;
           yval = pt2.y;
           if(i == 0){
-            // ROS_INFO("k: %d j: %d x: %f y: %f", k, j, xval, yval);
           }
           if (xval > maxr){
             maxr = xval;
@@ -211,26 +173,28 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     logfile << "Layer " << i << " radius: " << maxr << endl;
     maxr = 0;
   }
-  // cout << "6" << endl;
 
-  // ROS_INFO("5");
-  int n_points = 50;
-  float cyl[n_points+1][3];
+  int n_points = 50; // number of points between layers
+  float cyl[n_points+1][3]; // layer
   float pathx[PATH_SIZE];
   float pathy[PATH_SIZE];
   float pathz[PATH_SIZE];
   float r; 
   int p_size = 0;
+
+  // generate layers
   for(int i = 0; i < nlayers; i++){
     r = layer_r[i];
+    // saturate to minimum radius to avoid stem
     if(r < R_AVOID){
       r = R_AVOID;
     }
-    // cout << "Radius: " << r << endl; 
-    // Cylinder(r, n_points+1, layer_depths[i], cyl);
+
+    // generate spiral layers (this can be replaced by cylinder if required)
     Spiral(R_AVOID, r, n_points+1, 3, layer_depths[i], cyl); 
     for(int j = 0; j < n_points+1; j++){
-      // cout << "[" << cyl[j][0] + dcx << ", " << cyl[j][1] + dcy << ", " << cyl[j][2] << "]" << endl;
+      
+      // store in path arrays
       pathx[p_size + j] = (cyl[j][0] * SF) + dcx;
       pathy[p_size + j] = (cyl[j][1] * SF) + dcy;
       pathz[p_size + j] = (dcz - cyl[j][2]) + H_OFFSET;
@@ -239,18 +203,16 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     p_size += n_points + 1;
     
   }
-  // ROS_INFO("7");
-  // cout << "_______________" << endl;
-  // cout << "7 " << path[1][0] << endl;
+
+  // store all in one path
   for(int  i = 0; i<p_size;i++){
     path[0][i] = pathx[i];
     path[1][i] = pathy[i];
     path[2][i] = pathz[i];
-    // cout << "[" << path[0][i] << ", " << path[1][i]<< ", " << path[2][i] << "]" << endl;
+
   }
 
-  // cout << "7 " << path[1][0] << endl;
-  
+  // output to logfile
   logfile << "Path size = " << p_size << endl;
   logfile << "{";
   for(int i = 0; i < 3;i++){
@@ -267,9 +229,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     }
   }
   logfile << "}";
-  logfile << endl << "ivan sux" << endl;
   logfile.close(); 
-  // ROS_INFO("8");
   return p_size;
 }
 
@@ -294,19 +254,21 @@ int main (int argc, char *argv[]) {
   static bool sent_path = false;
   static bool done = false; 
 
-  
+  // check that bounding box has been given
   if (argc < 2) {
       ROS_ERROR("Missing required command line arguments <bounding box height> <bounding box width>");
       ros::shutdown(); 
       return -1;      
   }
 
+  // set bounding box size based on input arguments 
   int bb_height = std::atoi(argv[1]);
   int bb_width = std::atoi(argv[2]);
 
   geometry_msgs::PoseStamped p;
   while (ros::ok()){
     
+    // send path after has been generated 
     if(!first & !sent_path){
       for (int i = 0; i < size; i++){
         p.header.stamp = ros::Time::now();
@@ -332,6 +294,7 @@ int main (int argc, char *argv[]) {
     // Run callbacks
     ros::spinOnce();
 
+    // generate path first
     if(first && handler.exists){
       size = GeneratePath(path, BBX, BBY, bb_height, bb_width, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY);
       handler.GenerateModelPC(drone_pos.pose.pose.position.x, drone_pos.pose.pose.position.y, drone_pos.pose.pose.position.z);

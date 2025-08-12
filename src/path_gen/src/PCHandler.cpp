@@ -6,18 +6,21 @@ PCHandler::PCHandler() {
 
 PCHandler::~PCHandler() {}
 
+// return point cloud
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr PCHandler::GetPC(){
   return PC_;
 }
 
+// get point cloud from ROS and convert to PCL point cloud
 void PCHandler::CallbackPC(const sensor_msgs::PointCloud2ConstPtr& cloud){
   pcl::fromROSMsg(*cloud, *PC_);
   exists = true;
 }
 
+
+// Create model point cloud for visualisation in rviz
 void PCHandler::GenerateModelPC(float x_pos, float y_pos, float z_pos){
   if(!generated){
-    ROS_INFO("1");
     // create temporary point cloud and resize to match actual
     pcl::PointCloud<pcl::PointXYZRGB> temp;
     int c = PC_->width;
@@ -25,7 +28,6 @@ void PCHandler::GenerateModelPC(float x_pos, float y_pos, float z_pos){
     temp.width = c;
     temp.height = r;
     temp.points.resize(temp.width * temp.height);
-    ROS_INFO("2");
     // take current point cloud relative to drone and put in absolute position
     for(int i = 0; i < r; i++){
       for(int j = 0; j < c; j++){
@@ -39,17 +41,15 @@ void PCHandler::GenerateModelPC(float x_pos, float y_pos, float z_pos){
         pt_out.b = pt_in.b;
       }
     }
-        
-    ROS_INFO("3");
     // convert to ros point cloud for publishing
     model_pc_.reset(new sensor_msgs::PointCloud2);
     pcl::toROSMsg(temp, *model_pc_);
     model_pc_->header.frame_id = "map";
     generated = true;
-    ROS_INFO("4");
   }
 }
 
+// get model pc if required
 sensor_msgs::PointCloud2ConstPtr PCHandler::GetModelPC(){
   return model_pc_;
 }

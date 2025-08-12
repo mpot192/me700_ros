@@ -206,7 +206,7 @@ include_directories(
 # catkin_add_nosetests(test)
 
 
-add_executable(talker src/publish_thing.cpp)
+
 add_executable(follow_rmse_pos src/publish_path_rmse_pos.cpp)
 add_executable(hover_origin src/publish_origin_hover.cpp)
 add_executable(follow_rmse_vel_old src/publish_path_rmse_vel_old.cpp)
@@ -214,7 +214,6 @@ add_executable(follow_rmse_vel src/publish_path_rmse_vel.cpp)
 add_executable(follow_carrot src/publish_velocity_carrot.cpp)
 add_executable(follow_carrot_2 src/publish_carrot_FSM.cpp)
 
-target_link_libraries(talker ${catkin_LIBRARIES})
 target_link_libraries(follow_rmse_pos ${catkin_LIBRARIES})
 target_link_libraries(hover_origin ${catkin_LIBRARIES})
 target_link_libraries(follow_rmse_vel_old ${catkin_LIBRARIES})

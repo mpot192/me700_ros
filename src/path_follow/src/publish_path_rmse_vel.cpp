@@ -1,47 +1,117 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseStamped.h"
-#include "geometry_msgs/TwistStamped.h"
 #include "nav_msgs/Odometry.h"
 #include <nav_msgs/Path.h>
 #include <sstream>
 #include <cmath>
 #include <fstream>
+#include <eigen3/Eigen/Dense>
+#include <algorithm>
+#include <vector>
 
-// I know this is not ideal but im just making it work for now
+// message objects for getting current drone odom and desired path
 nav_msgs::Odometry drone_odom;
 nav_msgs::Path path;
-bool run = false;
-bool got_path = false;
-int cols;
 
+bool got_path = false; // flag to know if path has been recieved before attempting to do path following
+int path_sz; // number of waypoints in path being sent 
+
+// get drone odometry and store current position in vector
 void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
-  // ROS_INFO("yo: [%f, %f, %f]", msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
   drone_odom = *msg;
-  run = true;
+  current_pos << drone_odom.pose.pose.position.x, drone_odom.pose.pose.position.y, drone_odom.pose.pose.position.z;
 }
 
+// get path and store size
 void pathCallback(const nav_msgs::Path::ConstPtr& msg){
   path = *msg;
-  cols = path.poses.size();
+  path_sz = path.poses.size();
   got_path = true;
 }
 
-float GetRMSE(float des_pos[3]){
-  return sqrt((pow(drone_odom.pose.pose.position.x - des_pos[0], 2) + pow(drone_odom.pose.pose.position.y - des_pos[1], 2) + pow(drone_odom.pose.pose.position.z - des_pos[2], 2))/3);
+// Calculate RMSE from current position to current desired position waypoint 
+float GetRMSE(Eigen::Vector3f des_pos){
+  return (current_pos - des_pos).norm();
+}
+
+// Calculate cross track error (closest distance to path from current position within seletected window)
+float GetCrosstrack(Eigen::Vector3f des_pos, int idx){
+  
+  float min_d = 99999; // minimum distance to waypoint
+  int min_i = -99999; // index of minimum point
+  int search_start = STEP_BACK;
+  int search_stop = STEP_FWD;
+
+  Eigen::Vector3f check_point(0,0,0); // current waypoint distance is being check against
+
+  // find waypoint closest to drone currently within set window
+  // saturate to ensure checking within path limits
+  if(idx < STEP_BACK){
+    search_start = idx;
+  }
+  if(idx + STEP_FWD > path_sz){
+    search_stop = path_sz;
+  }
+  // search through window and find waypoint closest to drone
+  for(int i = -1*search_start; i < search_stop; i++){
+    check_point << path.poses[idx + i].pose.position.x, path.poses[idx + i].pose.position.y, path.poses[idx + i].pose.position.z;
+
+    if((current_pos - check_point).norm() < min_d){
+      min_d = (current_pos - check_point).norm();
+      min_i = i;
+    }
+  }
+
+  int offset = 1; // step back/fwd from closest point by 1 to find closest line segment
+  // check not out of range
+  if(idx + min_i <= 0 || idx + min_i >= path_sz - 1 ){
+    offset = 0;
+  }
+  Eigen::Vector3f back(path.poses[idx + min_i - offset].pose.position.x, path.poses[idx + min_i - offset].pose.position.y, path.poses[idx + min_i - offset].pose.position.z); // point behind closest point
+  Eigen::Vector3f fwd(path.poses[idx + min_i + offset].pose.position.x, path.poses[idx + min_i + offset].pose.position.y, path.poses[idx + min_i + offset].pose.position.z); // point in front of closest point
+  Eigen::Vector3f pt(path.poses[idx + min_i].pose.position.x, path.poses[idx + min_i].pose.position.y, path.poses[idx + min_i].pose.position.z); // closest point 
+  Eigen::Vector3f start_pt(0,0,0); // store point to start line segment at
+
+  float seg_d; // point along line segment closest to drone position (normalised)
+  Eigen::Vector3f seg(0,0,0); // line segment
+
+  // find next closest waypoint to get line segment of interest
+  if((current_pos - fwd).norm() < (current_pos - back).norm()){
+    // find line segment
+    seg = fwd - pt;
+    start_pt = pt;
+  } else{
+    seg = pt - back;
+    start_pt = back;
+  }
+
+  // find distance along segment where closest point lies and normalise 
+  seg_d = (current_pos - start_pt).dot(seg) / seg.dot(seg);
+
+  // saturate 
+  if(seg_d > 1){
+    seg_d = 1;
+  } else if(seg_d < 0){
+    seg_d = 0;
+  }
+
+  // find absolute point where min line meets seg
+  Eigen::Vector3f min_pt = start_pt + seg_d * seg;
+
+  // find length of line between drone and closest point (crosstrack error)
+  return (current_pos - min_pt).norm();
 }
 
 int main(int argc, char **argv){
-  ros::init(argc, argv, "path_talker");
+  ros::init(argc, argv, "follow_rmse_vel");
 
   ros::NodeHandle n;
   geometry_msgs::PoseStamped msg;
   geometry_msgs::TwistStamped vel_msg;
 
-  // Publisher to send target position
-  // ros::Publisher chatter_pub = n.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 1000);
+  // Publish to send target velocity
   ros::Publisher velocity_pub = n.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 1000);
-  
   // Subscriber to currrent odom (publishes the drones local position by MAVROS)
   ros::Subscriber pos_sub = n.subscribe("/mavros/global_position/local", 1000, odomCallback);
   // Subscriber to generated path
@@ -51,11 +121,14 @@ int main(int argc, char **argv){
   ros::Publisher followed_pub = n.advertise<nav_msgs::Path>("/followed_path", 1000);
   nav_msgs::Path follow;
 
+  // loop at 5 Hz
   ros::Rate loop_rate(5);
 
-  long count = 0;
-  int idx = 0;
-  float RMSE;
+  int idx = 0; // current index in path
+  float RMSE; // store root mean squared error
+  float XTE; // store cross track error
+
+  // for generating velocity command
   float dx;
   float dy;
   float dz;
@@ -64,51 +137,57 @@ int main(int argc, char **argv){
   float vy;
   float vz;
   
-  // Path info
-  // [x1 x2 .. ]
-  // [y1 y2 .. ]
-  // [z1 z2 .. ]]
-  // const int rows = 3;
-  // const int cols = 182;
-  // // Desired path 
-  // double path[rows][cols] = {{3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.12041, 3.22457, 3.29839, 3.33191, 3.32061, 3.26601, 3.17548, 3.06125, 2.93875, 2.82452, 2.73399, 2.67939, 2.66809, 2.70161, 2.77543, 2.87959, 3, 3, 3.06021, 3.11228, 3.14919, 3.16596, 3.1603, 3.133, 3.08774, 3.03062, 2.96938, 2.91226, 2.867, 2.8397, 2.83404, 2.85081, 2.88772, 2.93979, 3, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3, 3, 3.18062, 3.33685, 3.44758, 3.49787, 3.48091, 3.39901, 3.26322, 3.09187, 2.90813, 2.73678, 2.60099, 2.51909, 2.50213, 2.55242, 2.66315, 2.81938, 3},{3, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.33333, 3.31082, 3.24634, 3.14858, 3.03076, 2.90878, 2.79912, 2.71659, 2.67234, 2.67234, 2.71659, 2.79912, 2.90878, 3.03076, 3.14858, 3.24634, 3.31082, 3.33333, 3.16667, 3.15541, 3.12317, 3.07429, 3.01538, 2.95439, 2.89956, 2.8583, 2.83617, 2.83617, 2.8583, 2.89956, 2.95439, 3.01538, 3.07429, 3.12317, 3.15541, 3.16667, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5, 3.5, 3.46624, 3.3695, 3.22287, 3.04613, 2.86317, 2.69868, 2.57489, 2.50851, 2.50851, 2.57489, 2.69868, 2.86317, 3.04613, 3.22287, 3.3695, 3.46624, 3.5},{3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1.25, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25}};
-  
-  float current_path[3]; 
-  geometry_msgs::PoseStamped p;
+  Eigen::Vector3f current_target(0, 0, 0); // current target waypoint
+  nav_msgs::Path planned; // store planned path
+  geometry_msgs::PoseStamped p; 
 
-  std::ofstream logfile;
-  logfile.open("/home/matt/catkin_ws/bag/path_follow_vel_log.txt");
-  logfile << "["; 
+
+  std::ofstream logfile; // logfile for rmse output in matlab cell array format
+  logfile.open("/home/matt/catkin_ws/bag/path_follow_pos_log.txt");
+  logfile << "pos = {[";
+  
+  std::ofstream logfile_xte; // logfile for crosstrack error in regular matlab array format
+  logfile_xte.open("/home/matt/catkin_ws/bag/path_follow_xte_log.txt");
+  logfile_xte << "xte = [";
+
   while (ros::ok()){
     
-    // if(run) ROS_INFO("yo: [%f, %f, %f]", drone_odom.pose.pose.position.x, drone_odom.pose.pose.position.y, drone_odom.pose.pose.position.z);
     if(got_path){ // if have recieved a path message at least once
       // Get target point
-      current_path[0] = path.poses[idx].pose.position.x;
-      current_path[1] = path.poses[idx].pose.position.y;
-      current_path[2] = path.poses[idx].pose.position.z;
-      
+      current_target <<  path.poses[idx].pose.position.x, path.poses[idx].pose.position.y, path.poses[idx].pose.position.z;
+    
       // calcualte error from path
-      dx = current_path[0] - drone_odom.pose.pose.position.x;
-      dy = current_path[1] - drone_odom.pose.pose.position.y;
-      dz = current_path[2] - drone_odom.pose.pose.position.z;
-      
+      dx = current_target[0] - drone_odom.pose.pose.position.x;
+      dy = current_target[1] - drone_odom.pose.pose.position.y;
+      dz = current_target[2] - drone_odom.pose.pose.position.z;
 
-      RMSE = GetRMSE(current_path);
+      RMSE = GetRMSE(current_target);
+      XTE = GetCrosstrack(current_target, idx);
       ROS_INFO("RMSE: %.2f",RMSE);
-      // Move to next index in desired path
-      if (RMSE <= 0.05 && idx < cols){
+      ROS_INFO("XTE: %.2f", XTE);
+      ROS_INFO("(%d/%d): [%.2f, %.2f, %.2f]", idx, path_sz, current_target.x(), current_target.y(), current_target.z());
+
+logfile << RMSE;
+      if(!std::isnan(XTE)) logfile_xte << XTE; // crosstrack can return nan in some cases when too far away, so just in case
+
+      // if reached end of path, just return to start of path and continue
+      if (idx >= path_sz - 1){
+        idx = 0;
+        logfile << "]};" << std::endl << std::endl << "{";
+        logfile_xte << "];" << std::endl << std::endl << "[";
+
+      } else if (RMSE <= 0.2 && idx < path_sz){ // Move to next index in desired path
           idx++;
-          logfile << ";" << std::endl;
-      } else if (idx == cols - 1){
-          idx = 0;
-          count = 0;
-          logfile << "];" << std::endl << std::endl;
-      } else{
-          logfile << RMSE << ", ";
+          current_target <<  path.poses[idx].pose.position.x, path.poses[idx].pose.position.y, path.poses[idx].pose.position.z;
+          logfile << "],[";
+          if(!std::isnan(XTE)) logfile_xte << ",";
+      } else{ // else just output data as normal
+          logfile << ",";
+          if(!std::isnan(XTE)) logfile_xte << ",";
       }
+
       float norm = sqrt(dx*dx + dy*dy + dz*dz);
-      float set_speed = 0.05; // (m/s)
+      float set_speed = 0.2; // (m/s)
       
       // Uses the drones current position and setpoint to calculate the velocity vector but scaled to set_speed
       vx = (dx/norm) * set_speed;
