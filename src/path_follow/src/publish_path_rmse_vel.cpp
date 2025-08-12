@@ -6,6 +6,7 @@
 #include <nav_msgs/Path.h>
 #include <sstream>
 #include <cmath>
+#include <fstream>
 
 // I know this is not ideal but im just making it work for now
 nav_msgs::Odometry drone_odom;
@@ -74,6 +75,10 @@ int main(int argc, char **argv){
   
   float current_path[3]; 
   geometry_msgs::PoseStamped p;
+
+  std::ofstream logfile;
+  logfile.open("/home/matt/catkin_ws/bag/path_follow_vel_log.txt");
+  logfile << "["; 
   while (ros::ok()){
     
     // if(run) ROS_INFO("yo: [%f, %f, %f]", drone_odom.pose.pose.position.x, drone_odom.pose.pose.position.y, drone_odom.pose.pose.position.z);
@@ -91,15 +96,17 @@ int main(int argc, char **argv){
 
       RMSE = GetRMSE(current_path);
       ROS_INFO("RMSE: %.2f",RMSE);
-
       // Move to next index in desired path
       if (RMSE <= 0.05 && idx < cols){
           idx++;
+          logfile << ";" << std::endl;
       } else if (idx == cols - 1){
           idx = 0;
           count = 0;
+          logfile << "];" << std::endl << std::endl;
+      } else{
+          logfile << RMSE << ", ";
       }
-      
       float norm = sqrt(dx*dx + dy*dy + dz*dz);
       float set_speed = 0.05; // (m/s)
       
@@ -153,5 +160,7 @@ int main(int argc, char **argv){
     loop_rate.sleep();
     count++;
   }
+  logfile.close();
   return 0;
+
 }

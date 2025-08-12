@@ -291,6 +291,7 @@ int main (int argc, char *argv[]) {
   int size;
 
   static bool first = true;
+  static bool sent_path = false;
   static bool done = false; 
 
   
@@ -306,7 +307,7 @@ int main (int argc, char *argv[]) {
   geometry_msgs::PoseStamped p;
   while (ros::ok()){
     
-    if(!first){
+    if(!first & !sent_path){
       for (int i = 0; i < size; i++){
         p.header.stamp = ros::Time::now();
         p.header.frame_id = "map";
@@ -320,9 +321,8 @@ int main (int argc, char *argv[]) {
         p.pose.orientation.z = 0.0; 
         p.pose.orientation.w = 1.0;
         planned.poses.push_back(p);
+        sent_path = true;
       }
-    
-
       cloud_pub.publish(handler.GetModelPC());
     }
 
