@@ -52,12 +52,9 @@ float GetCrosstrack(Eigen::Vector3f des_pos, int idx){
 
   // find waypoint closest to drone currently within set window
   // saturate to ensure checking within path limits
-  if(idx < STEP_BACK){
-    search_start = idx;
-  }
-  if(idx + STEP_FWD > path_sz){
-    search_stop = path_sz;
-  }
+  search_start = std::min(idx, STEP_BACK);
+  search_stop = std::min(idx + STEP_FWD, path_sz);
+
   // search through window and find waypoint closest to drone
   for(int i = -1*search_start; i < search_stop; i++){
     check_point << path.poses[idx + i].pose.position.x, path.poses[idx + i].pose.position.y, path.poses[idx + i].pose.position.z;

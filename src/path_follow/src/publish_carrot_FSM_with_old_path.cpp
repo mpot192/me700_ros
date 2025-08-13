@@ -26,16 +26,8 @@ Eigen::Vector3f prev_carrot(0,0,0);
 
 float dist3D(float x1, float y1, float z1, float x2, float y2, float z2);
 
-// enum DroneNavState{ IDLE, FOLLOW_LAYER, NEXT_LAYER, END};
-// DroneNavState current_state = IDLE;
-
 bool FollowCarrotLayer(const double path_layer[3][182], int layer_size, const Eigen::Vector3f& drone_pos, Eigen::Vector3f& carrot, bool& layer_completed, bool& reached_first_point){
         
-
-    // Eigen::Vector3f prev_carrot(0, 0, 0);
-    // bool first_carrot_set = false;
-    
-
     // PHASE 1: Go to first point
     if (!reached_first_point) {
         carrot = Eigen::Vector3f(path_layer[0][0], path_layer[1][0], path_layer[2][0]);
@@ -70,7 +62,6 @@ bool FollowCarrotLayer(const double path_layer[3][182], int layer_size, const Ei
         int closest_idx = 0;
 
         for (int i = search_start; i < search_end; ++i) {
-        // for (int i = 0; i < layer_size; ++i) {
 
             // Finding distance between drone and waypoints
             float dist = dist3D(

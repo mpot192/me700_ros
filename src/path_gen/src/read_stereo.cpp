@@ -191,8 +191,8 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     }
 
     // generate spiral layers (this can be replaced by cylinder if required)
-    Spiral(R_AVOID, r, n_points+1, 3, layer_depths[i], cyl); 
-    for(int j = 0; j < n_points+1; j++){
+    Spiral(R_AVOID, r, n_points, 3, layer_depths[i], cyl); 
+    for(int j = 0; j < n_points; j++){
       
       // store in path arrays
       pathx[p_size + j] = (cyl[j][0] * SF) + dcx;

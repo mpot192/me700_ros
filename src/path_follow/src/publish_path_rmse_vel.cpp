@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/TwistStamped.h"
 #include "nav_msgs/Odometry.h"
 #include <nav_msgs/Path.h>
 #include <sstream>
@@ -16,6 +17,12 @@ nav_msgs::Path path;
 
 bool got_path = false; // flag to know if path has been recieved before attempting to do path following
 int path_sz; // number of waypoints in path being sent 
+
+// for finding crosstrack error
+Eigen::Vector3f current_pos(0,0,0);
+#define STEP_BACK 5 // how far back to look from current waypoint for closest path point
+#define STEP_FWD 10 // same as above except forward
+
 
 // get drone odometry and store current position in vector
 void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
@@ -47,12 +54,9 @@ float GetCrosstrack(Eigen::Vector3f des_pos, int idx){
 
   // find waypoint closest to drone currently within set window
   // saturate to ensure checking within path limits
-  if(idx < STEP_BACK){
-    search_start = idx;
-  }
-  if(idx + STEP_FWD > path_sz){
-    search_stop = path_sz;
-  }
+  search_start = std::min(idx, STEP_BACK);
+  search_stop = std::min(idx + STEP_FWD, path_sz);
+
   // search through window and find waypoint closest to drone
   for(int i = -1*search_start; i < search_stop; i++){
     check_point << path.poses[idx + i].pose.position.x, path.poses[idx + i].pose.position.y, path.poses[idx + i].pose.position.z;
@@ -157,9 +161,9 @@ int main(int argc, char **argv){
       current_target <<  path.poses[idx].pose.position.x, path.poses[idx].pose.position.y, path.poses[idx].pose.position.z;
     
       // calcualte error from path
-      dx = current_target[0] - drone_odom.pose.pose.position.x;
-      dy = current_target[1] - drone_odom.pose.pose.position.y;
-      dz = current_target[2] - drone_odom.pose.pose.position.z;
+      dx = current_target.x() - drone_odom.pose.pose.position.x;
+      dy = current_target.y() - drone_odom.pose.pose.position.y;
+      dz = current_target.z() - drone_odom.pose.pose.position.z;
 
       RMSE = GetRMSE(current_target);
       XTE = GetCrosstrack(current_target, idx);
@@ -167,7 +171,7 @@ int main(int argc, char **argv){
       ROS_INFO("XTE: %.2f", XTE);
       ROS_INFO("(%d/%d): [%.2f, %.2f, %.2f]", idx, path_sz, current_target.x(), current_target.y(), current_target.z());
 
-logfile << RMSE;
+      logfile << RMSE;
       if(!std::isnan(XTE)) logfile_xte << XTE; // crosstrack can return nan in some cases when too far away, so just in case
 
       // if reached end of path, just return to start of path and continue
@@ -237,7 +241,6 @@ logfile << RMSE;
 
     // Wait
     loop_rate.sleep();
-    count++;
   }
   logfile.close();
   return 0;
