@@ -160,16 +160,16 @@ int main(int argc, char **argv){
         return  -1;
     }
 
-    // auto now = std::chrono::system_clock::now();
-    // auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(
-    //                now.time_since_epoch()
-    //            ).count();
+    auto now = std::chrono::system_clock::now();
+    auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(
+                   now.time_since_epoch()
+               ).count();
 
-    // std::string filename_rmse = std::string(std::getenv("HOME")) + "/bag/path_follow_rmse_log" + std::to_string(ms) + ".txt";
-    // std::string filename_xte = std::string(std::getenv("HOME")) + "/bag/path_follow_xte_log" + std::to_string(ms) + ".txt";
+    std::string filename_rmse =  "/home/matt/catkin_ws/bag/path_follow_rmse_log_" + std::to_string(ms) + ".txt";
+    std::string filename_xte = "/home/matt/catkin_ws/bag/path_follow_xte_log_" + std::to_string(ms) + ".txt";
 
-    std::string filename_rmse = "/home/matt/catkin_ws/bag/path_follow_rmse_log.txt";
-    std::string filename_xte = "/home/matt/catkin_ws/bag/path_follow_xte_log.txt";
+    // std::string filename_rmse = "/home/matt/catkin_ws/bag/path_follow_rmse_log.txt";
+    // std::string filename_xte = "/home/matt/catkin_ws/bag/path_follow_xte_log.txt";
 
     std::ofstream logfile_rmse; // logfile for rmse output in matlab cell array format
     logfile_rmse.open(filename_rmse);
