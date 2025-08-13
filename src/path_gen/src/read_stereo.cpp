@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Path.h>
+#include <std_msgs/Int32.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -34,6 +35,8 @@ using namespace std;
                
 PCHandler handler;
 nav_msgs::Odometry drone_pos;
+
+int nlayers; // store number of layers globally for ease of publishing
 
 void get_position(const nav_msgs::Odometry& msg){
   drone_pos = msg; 
@@ -102,8 +105,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     bbru = bbwu / 2;
   }
 
-
-  // find max and min height within area of interest
+  // find max and min depth within area of interest
   for(int i = 0; i < width; i++){
     for(int j = 0; j < height; j++){
       if(pow((i - bbx),2) + pow((j - bby),2) <= pow(bbru, 2)){
@@ -129,7 +131,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   endh = minh + (maxh - minh)*d_cut;
 
   // get layer depths
-  int nlayers = ceil((endh-starth)/h_layer);
+  nlayers = ceil((endh-starth)/h_layer);
   if(nlayers > 1){
     ROS_INFO("Generating path with %d layers.", nlayers);
   } 
@@ -175,7 +177,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   }
 
   int n_points = 50; // number of points between layers
-  float cyl[n_points+1][3]; // layer
+  float cyl[n_points][3]; // layer
   float pathx[PATH_SIZE];
   float pathy[PATH_SIZE];
   float pathz[PATH_SIZE];
@@ -243,6 +245,7 @@ int main (int argc, char *argv[]) {
   ros::Subscriber sub = nh.subscribe("/camera/depth/points", 10, &PCHandler::CallbackPC, &handler);
   ros::Subscriber pos = nh.subscribe("/mavros/global_position/local", 10, get_position);
   ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("/path_gen/planned_path", 1000);
+  ros::Publisher path_layer_pub = nh.advertise<std_msgs::Int32>("/path_gen/layer_count", 10);
   ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/path_gen/depth_model", 1000);
   nav_msgs::Path planned;
 
@@ -291,6 +294,11 @@ int main (int argc, char *argv[]) {
     planned.header.frame_id = "map";
     planned.header.stamp = ros::Time::now();
     path_pub.publish(planned);
+
+    std_msgs::Int32 nl;
+    nl.data = nlayers;
+    path_layer_pub.publish(nl);
+
     // Run callbacks
     ros::spinOnce();
 
