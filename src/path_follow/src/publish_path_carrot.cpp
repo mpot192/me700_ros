@@ -14,7 +14,7 @@
 
 
 #define LOOKAHEAD_DIST 0.125            // distance from closest point on path to carrot [m]
-#define MAX_CARROT_JUMP 0.225           // limit single carrot movement to this distance [m]
+#define MAX_CARROT_JUMP 100         // limit single carrot movement to this distance [m]
 #define START_THRESHOLD 0.2             // error threshold for knowing if start of path has been reached [m]
 #define SEARCH_WIN_START -3             // how far to step back when searching for closest point in path
 #define SEARCH_WIN_STOP 3               // ^^ but forward
@@ -29,12 +29,13 @@ bool got_path = false;                  // flag to know if path has been recieve
 int path_sz;                            // number of waypoints in path being sent
 int nlayers;
 bool run = false;
-int current_layer_idx = 0;
+int current_layer_idx = 1;
 bool reached_first_point = false;
 int col_size;
 bool near_end;
 int prev_closest_idx = 0;
 bool first_carrot_set = false;
+bool at_last_point = false;
 Eigen::Vector3f prev_carrot(0,0,0);
 
 // for getting drone position
@@ -93,11 +94,10 @@ bool FollowCarrotLayer(int current_layer_idx, int layer_size, const Eigen::Vecto
     else {
 
         // 1. Find closest point on path within set window
-        int search_start = std::max(0, prev_closest_idx - SEARCH_WIN_START);   // Allow small backward correction
+        int search_start = std::max(0, prev_closest_idx + SEARCH_WIN_START);   // Allow small backward correction
         int search_end   = std::min(layer_size - 1, prev_closest_idx + SEARCH_WIN_STOP); // Lookahead window 
         float min_dist = 10000; // Just a large number for now
         int closest_idx = 0;
-
         for (int i = search_start; i < search_end; ++i) {
             // Finding distance between drone and waypoints
             float dist = Dist3D(
@@ -109,6 +109,9 @@ bool FollowCarrotLayer(int current_layer_idx, int layer_size, const Eigen::Vecto
                 path.poses[current_layer_idx*layer_size + i].pose.position.z
             );
 
+             ROS_INFO_THROTTLE(0.5,"Distance : [%.2f]",dist);
+
+
             // Finding the index of the point thats closest to the drone
             if (dist < min_dist) {
                 min_dist = dist;
@@ -117,7 +120,7 @@ bool FollowCarrotLayer(int current_layer_idx, int layer_size, const Eigen::Vecto
         }
         prev_closest_idx = closest_idx; // Update memory for next iteration
 
-        ROS_INFO_THROTTLE(1,"Closest point: [%.2f, %.2f, %.2f]", path.poses[current_layer_idx*layer_size + closest_idx].pose.position.x, path.poses[current_layer_idx*layer_size + closest_idx].pose.position.y, path.poses[current_layer_idx*layer_size + closest_idx].pose.position.z);
+        ROS_INFO_THROTTLE(2,"Closest point: [%.2f, %.2f, %.2f]", path.poses[current_layer_idx*layer_size + closest_idx].pose.position.x, path.poses[current_layer_idx*layer_size + closest_idx].pose.position.y, path.poses[current_layer_idx*layer_size + closest_idx].pose.position.z);
 
         // 2. Walk forward along path to find carrot using interpolation
         float remaining_lookahead = LOOKAHEAD_DIST;
@@ -140,6 +143,7 @@ bool FollowCarrotLayer(int current_layer_idx, int layer_size, const Eigen::Vecto
 
                 // Placing the carrot there
                 carrot = p1 + t * (p2 - p1);
+                // ROS_INFO("Moving carrot by %f", t);
                 layer_completed = false;
                 break;
 
@@ -155,6 +159,7 @@ bool FollowCarrotLayer(int current_layer_idx, int layer_size, const Eigen::Vecto
                                 path.poses[current_layer_idx*layer_size + layer_size - 1].pose.position.z);
         if (j >= layer_size - 1) {
             carrot = last_point;
+            at_last_point = true;
         }
 
         if (!first_carrot_set) {
@@ -164,6 +169,7 @@ bool FollowCarrotLayer(int current_layer_idx, int layer_size, const Eigen::Vecto
 
             // Memory element
             float jump_dist = (carrot - prev_carrot).norm();
+            // ROS_INFO_THROTTLE(1.0, "Carrot in same Pos - Jump dist too high!");
             // if Carrot jumps too much:
             if (jump_dist > MAX_CARROT_JUMP){
                 // Keep carrot in same position
@@ -198,7 +204,7 @@ int main(int argc, char **argv) {
     geometry_msgs::TwistStamped vel_msg;
     geometry_msgs::PoseStamped pose;
 
-    // Publisher to send target position
+    // Publisher to send target velocity
     ros::Publisher velocity_pub = n.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 1000);
 
     // Subscriber to current odom for drone position
@@ -223,6 +229,7 @@ int main(int argc, char **argv) {
     // Subscribers for path and layer count
     ros::Subscriber path_sub = n.subscribe("/path_gen/planned_path", 1000, pathCallback);
     ros::Subscriber nlayer_sub = n.subscribe("/path_gen/layer_count", 1000, nlayerCallback);
+    
     // Parameters
     bool reached_first_point = false;
     int num_of_layers = 0;
@@ -325,7 +332,7 @@ int main(int argc, char **argv) {
         Eigen::Vector3f direction_to_carrot = carrot - drone_pos;
         float dist_to_carrot = direction_to_carrot.norm();
 
-        ROS_INFO_THROTTLE(1,"Carrot position: [%.2f, %.2f, %.2f]", carrot.x(), carrot.y(), carrot.z());
+        ROS_INFO_THROTTLE(1,"(%d/%d) Carrot position: [%.2f, %.2f, %.2f]", current_layer_idx, nlayers - 1, carrot.x(), carrot.y(), carrot.z());
 
         if(dist_to_carrot > 0.01){ // balls 0.1 0.01
             // normalized gets the unit vector
@@ -339,7 +346,7 @@ int main(int argc, char **argv) {
             // If close enough, set velocity to 0 - realistically shouldnt happen but
         }
         // Stop if near end
-        if (dist_to_carrot < 0.05 && reached_first_point) { // 0.05 balls 0.005
+        if (dist_to_carrot < 0.05 && reached_first_point && at_last_point) {
             velocity = Eigen::Vector3f(0, 0, 0);
             // ROS_INFO("Reached final target. Hovering.");
             ROS_INFO_THROTTLE(1.0, "Reached final target. Hovering.");

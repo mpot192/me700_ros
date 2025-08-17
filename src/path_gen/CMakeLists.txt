@@ -208,6 +208,11 @@ include_directories(
 # catkin_add_nosetests(test)
 
 add_executable(read_stereo src/read_stereo.cpp src/PCHandler.cpp)
+
 target_link_libraries(read_stereo 
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES})
+
+
+add_executable(test_path src/generate_test_path.cpp)
+target_link_libraries(test_path ${catkin_LIBRARIES})

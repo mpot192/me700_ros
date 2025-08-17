@@ -215,6 +215,7 @@ add_executable(follow_rmse src/publish_path_rmse.cpp)
 add_executable(follow_carrot_set src/publish_velocity_carrot.cpp)
 add_executable(follow_carrot_2 src/publish_carrot_FSM.cpp)
 add_executable(follow_carrot src/publish_path_carrot.cpp)
+add_executable(follow_path src/publish_path.cpp)
 
 
 target_link_libraries(follow_rmse_pos ${catkin_LIBRARIES})
@@ -225,3 +226,5 @@ target_link_libraries(follow_rmse ${catkin_LIBRARIES})
 target_link_libraries(follow_carrot_set ${catkin_LIBRARIES})
 target_link_libraries(follow_carrot_2 ${catkin_LIBRARIES})
 target_link_libraries(follow_carrot ${catkin_LIBRARIES})
+target_link_libraries(follow_path ${catkin_LIBRARIES})
+

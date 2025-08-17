@@ -249,7 +249,7 @@ int main(int argc, char **argv){
                 vx = (dx/norm) * set_speed;
                 vy = (dy/norm) * set_speed;
                 vz = (dz/norm) * set_speed;
-                
+
 
                 // Add time and frame_id to message
                 vel_msg.header.stamp = ros::Time::now();

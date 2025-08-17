@@ -202,7 +202,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
       pathz[p_size + j] = (dcz - cyl[j][2]) + H_OFFSET;
       logfile << j << " " << "[" << cyl[j][0] + dcx << ", " << cyl[j][1] + dcy << ", " <<  cyl[j][2]<< "]" << endl;
     }
-    p_size += n_points + 1;
+    p_size += n_points;
     
   }
 
@@ -272,7 +272,7 @@ int main (int argc, char *argv[]) {
   while (ros::ok()){
     
     // send path after has been generated 
-    if(!first & !sent_path){
+    if(!first && !sent_path){
       for (int i = 0; i < size; i++){
         p.header.stamp = ros::Time::now();
         p.header.frame_id = "map";
