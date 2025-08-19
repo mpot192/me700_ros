@@ -20,6 +20,18 @@ using namespace std;
 
 int nlayers = 1; // store number of layers globally for ease of publishing
 
+// generate a circle based on input parameters
+void Cylinder(float r, int n, float h, float cyl[3][PATH_SIZE]){
+  // float r = diameter/2;
+  float dt = (2*M_PI)/(n-1);
+
+  // generate circle
+  for(int i = 0; i < n; i++){
+    cyl[0][i] = r*cos(i*dt);
+    cyl[1][i] = r*sin(i*dt);
+    cyl[2][i] = h;
+  }
+}
 
 int GeneratePath(float (&path)[3][PATH_SIZE], string path_style, float path_dim){
     // generate diagonal line from (1,1,1) diagonal to end 
@@ -36,6 +48,8 @@ int GeneratePath(float (&path)[3][PATH_SIZE], string path_style, float path_dim)
             path[1][i] = (1 - t)*start.y() + (t)*end.y();
             path[2][i] = (1 - t)*start.z() + (t)*end.z();
         }
+    } else if(path_style == "circle"){
+      Cylinder(path_dim, PATH_SIZE, 1.0, path);
     }
     return PATH_SIZE;
 }

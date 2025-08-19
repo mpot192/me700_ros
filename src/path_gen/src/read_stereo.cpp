@@ -25,10 +25,13 @@ using namespace std;
 #define BBY 240
 
 // INPUT PARAMETERS
-#define R_AVOID 0.1 // inner radius to avoid cutting
-#define H_LAYER 0.25 // distance between cutting layers 
-#define D_CUT 0.4 // diameter of cutting head
+#define R_AVOID 0.1 // inner radius to avoid cutting [m]
+#define H_LAYER 0.25 // distance between cutting layers [m]
+#define D_CUT 0.4 // diameter of cutting head [m] 
 #define UNCERTAINTY 0.9 // fraction inside bounding box to be used for path generation
+#define MIN_SPACE 0.15 // minimum spacing between spiral loops/concentric circles in a layer
+#define N_LAYER_POINTS 50 // number of points in a layer 
+#define N_SPIRALS 3 // target number of spirals in a layer
 
 #define SF 1 // scaling factor for path to avoid hitting the target with the drone
 #define H_OFFSET 0 // z offset for drone position if required
@@ -57,6 +60,7 @@ void Cylinder(float r, int n, float h, float cyl[][3]){
 
 // generate a spiral based on input parameters
 void Spiral(float r_min, float r_max, int n_points, int n_spiral, float h, float sp[][3]){
+
   float dt = (2*M_PI) * (n_spiral/(float)n_points); 
   float dr = (r_max - r_min)/n_points; 
 
@@ -171,12 +175,12 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     } else{
       layer_r[i] = maxr;
     }
-    ROS_INFO("Layer %d radius: %f", i, maxr);
     logfile << "Layer " << i << " radius: " << maxr << endl;
     maxr = 0;
   }
 
-  int n_points = 50; // number of points between layers
+  int n_points = N_LAYER_POINTS; // number of points between layers
+  int n_spiral; // maximum (target) number of spirals in spiral layer
   float cyl[n_points][3]; // layer
   float pathx[PATH_SIZE];
   float pathy[PATH_SIZE];
@@ -187,13 +191,25 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   // generate layers
   for(int i = 0; i < nlayers; i++){
     r = layer_r[i];
+    n_spiral = N_SPIRALS;
     // saturate to minimum radius to avoid stem
     if(r < R_AVOID){
       r = R_AVOID;
     }
 
-    // generate spiral layers (this can be replaced by cylinder if required)
-    Spiral(R_AVOID, r, n_points, 3, layer_depths[i], cyl); 
+    while((r-R_AVOID)/n_spiral < MIN_SPACE && n_spiral > 1){
+      n_spiral--;
+    }
+
+    // generate layers, spiral if large enough otherwise single circle
+    if(n_spiral == 1){ // circle
+      ROS_INFO("Generating Layer %d as a circle with r = %.2fm.", i, r);
+      Cylinder(r, n_points, layer_depths[i], cyl);
+    } else{
+      Spiral(R_AVOID, r, n_points, n_spiral, layer_depths[i], cyl);
+      ROS_INFO("Generating Layer %d as a spiral with r = %.2fm and n = %d (/%d).", i, r, n_spiral, N_SPIRALS);
+    }
+    
     for(int j = 0; j < n_points; j++){
       
       // store in path arrays
@@ -307,7 +323,6 @@ int main (int argc, char *argv[]) {
       size = GeneratePath(path, BBX, BBY, bb_height, bb_width, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY);
       handler.GenerateModelPC(drone_pos.pose.pose.position.x, drone_pos.pose.pose.position.y, drone_pos.pose.pose.position.z);
       ROS_INFO("Generated path of size: %d!",size);
-      ROS_INFO("PATH [%f, %f, %f]", path[0][0], path[1][0], path[2][0]);
       first = false;
     }
 
