@@ -133,6 +133,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   // start at min depth
   starth = minh;
   endh = minh + (maxh - minh)*d_cut;
+  float total_depth = endh-starth;
 
   // get layer depths
   nlayers = ceil((endh-starth)/h_layer);
@@ -178,6 +179,19 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     logfile << "Layer " << i << " radius: " << maxr << endl;
     maxr = 0;
   }
+
+  // fit radii based on linear relationship between start and end instead
+  float r_min = layer_r[0];
+  float r_max = layer_r[nlayers - 1];
+  float m = (r_max-r_min)/total_depth;
+  float r_fit;
+  ROS_INFO("Layer 0 r fit = %.2f at d = %.2f",r_min, layer_depths[0]);
+  for(int i = 1; i < nlayers - 1; i++){
+    r_fit = m*(layer_depths[i] - starth) + r_min;
+    ROS_INFO("Layer %d r fit = %.2f at d = %.2f",i, r_fit, layer_depths[i]);
+    layer_r[i] = r_fit;
+  }
+  ROS_INFO("Layer %d r fit = %.2f at d = %.2f",nlayers - 1, r_max, layer_depths[nlayers - 1]);
 
   int n_points = N_LAYER_POINTS; // number of points between layers
   int n_spiral; // maximum (target) number of spirals in spiral layer
@@ -304,9 +318,9 @@ int main (int argc, char *argv[]) {
         planned.poses.push_back(p);
         sent_path = true;
       }
-      cloud_pub.publish(handler.GetModelPC());
+      
     }
-
+    cloud_pub.publish(handler.GetModelPC());
     planned.header.frame_id = "map";
     planned.header.stamp = ros::Time::now();
     path_pub.publish(planned);

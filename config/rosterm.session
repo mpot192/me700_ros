@@ -1,0 +1,14 @@
+
+layout grid
+cd ~/catkin_ws
+
+# Left column anchor
+launch --title sim --var col=left bash
+launch --location=hsplit --title follow bash
+launch --location=hsplit --title pathgen bash
+launch --location=hsplit --title hover bash
+launch --location=hsplit --title arm bash
+launch --location=hsplit --title offboard bash
+launch --location=hsplit --title posctl bash
+launch --location=hsplit --title rviz bash
+launch --location=hsplit --title compile bash
