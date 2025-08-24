@@ -74,7 +74,7 @@ int main (int argc, char *argv[]) {
   static bool done = false; 
 
   // check that bounding box has been given
-  if (argc < 2) {
+  if (argc < 3) {
       ROS_ERROR("Missing required command line arguments <path style> <dimension>");
       ros::shutdown(); 
       return -1;      

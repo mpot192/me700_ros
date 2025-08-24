@@ -20,8 +20,8 @@ Eigen::Vector3f current_pos(0,0,0);
 #define STEP_FWD 10 // same as above except forward
 
 // ---- RMSE FOLLOWING
-#define SET_VEL 0.2 //[m/s]
-#define RMSE_THRESH 0.2 //m
+// #define SET_VEL 0.2 //[m/s]
+// #define RMSE_THRESH 0.2 //[m]
 
 // ---- CARROT FOLLOWING ----
 #define LOOKAHEAD_DIST 0.125            // distance from closest point on path to carrot [m]
@@ -325,21 +325,39 @@ int main(int argc, char **argv){
     float vx;
     float vy;
     float vz;
+
+    float rmse_thresh;
+    float set_speed;
+    bool complete_carrot = false;
   
     Eigen::Vector3f current_target(0, 0, 0); // current target waypoint
     nav_msgs::Path planned; // store planned path
     geometry_msgs::PoseStamped p; 
 
-    std::string follow_mode = argv[1];
+
+
     if (argc < 2){
-        ROS_ERROR("Missing required command line arguments <command_mode> (pos/vel/carrot)");
+        ROS_ERROR("Missing required command line arguments <command_mode> (pos/vel/carrot) <thresh> <speed (if required)>");
         ros::shutdown();
         return -1;
-    } else if (follow_mode not_eq "vel" and follow_mode not_eq "pos" and follow_mode not_eq "carrot"){ // never knew you could write logical ops like this
-        ROS_ERROR("Missing required command line arguments <command_mode> (pos/vel/carrot)");
+    }
+
+    std::string follow_mode = argv[1];
+    
+    if (follow_mode not_eq "vel" and follow_mode not_eq "pos" and follow_mode not_eq "carrot"){ // never knew you could write logical ops like this
+        ROS_ERROR("Missing required command line arguments <command_mode> (pos/vel/carrot) <<thresh>> <<speed>>");
         ros::shutdown();
         return  -1;
     }
+
+    if(follow_mode == "pos" || follow_mode == "vel"){
+        rmse_thresh = std::stof(argv[2]);
+    } 
+    if(follow_mode == "vel"){
+        set_speed = std::stof(argv[3]);
+    }
+
+
 
     // LOG FILE INIT
     auto now = std::chrono::system_clock::now();
@@ -357,9 +375,12 @@ int main(int argc, char **argv){
     logfile_xte.open(filename_xte);
 
     if(follow_mode == "pos"){
+        logfile_rmse << "thresh = " << rmse_thresh << "m" << std::endl;
         logfile_rmse << "rmse_pos = {[";
         logfile_xte << "xte_pos = [";
     } else if(follow_mode == "vel"){
+        logfile_rmse << "thresh = " << rmse_thresh << "m" << std::endl;
+        logfile_rmse << "speed = " << set_speed << "m/s" << std::endl;
         logfile_rmse << "rmse_vel = {[";
         logfile_xte << "xte_vel = [";
     } else if(follow_mode == "carrot"){
@@ -367,6 +388,7 @@ int main(int argc, char **argv){
         logfile_xte << "xte_carrot = [";
     }
 
+    ros::Time follow_start = ros::Time::now();
 
     while(ros::ok()){
 
@@ -391,12 +413,15 @@ int main(int argc, char **argv){
             if(!std::isnan(XTE)) logfile_xte << XTE; // crosstrack can return nan in some cases when too far away, so just in case
 
             // if reached end of path, just return to start of path and continue
-            if (idx >= path_sz - 1){
+            if (idx >= path_sz - 1 || complete_carrot){
+                ros::Time follow_end = ros::Time::now();
+                ros::Duration elapsed = follow_end - follow_start;
                 idx = 0;
-                logfile_rmse << "]};" << std::endl << std::endl << "{";
-                logfile_xte << "];" << std::endl << std::endl << "[";
+                logfile_rmse << "]};" << std::endl << "time = " << elapsed.toSec() << std::endl << "{";
+                logfile_xte << "];" << std::endl<< "time = " << elapsed.toSec() << std::endl << "[";
+                
 
-            } else if (RMSE <= 0.2 && idx < path_sz){ // Move to next index in desired path
+            } else if (RMSE <= rmse_thresh& idx < path_sz){ // Move to next index in desired path
                 idx++;
                 current_target <<  path.poses[idx].pose.position.x, path.poses[idx].pose.position.y, path.poses[idx].pose.position.z;
                 logfile_rmse << "],[";
@@ -428,7 +453,7 @@ int main(int argc, char **argv){
             } else if(follow_mode == "vel"){
                 // velocity
                 float norm = sqrt(dx*dx + dy*dy + dz*dz);
-                float set_speed = SET_VEL; // (m/s)
+                // float set_speed = SET_VEL; // (m/s)
                 
                 // Uses the drones current position and setpoint to calculate the velocity vector but scaled to set_speed
                 vx = (dx/norm) * set_speed;
@@ -534,6 +559,7 @@ int main(int argc, char **argv){
                 // Stop if near end
                 if (dist_to_carrot < 0.05 && reached_first_point && at_last_point) {
                     velocity = Eigen::Vector3f(0, 0, 0);
+                    complete_carrot = true;
                     // ROS_INFO("Reached final target. Hovering.");
                     ROS_INFO_THROTTLE(1.0, "Reached final target. Hovering.");
                 }
