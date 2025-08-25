@@ -329,7 +329,8 @@ int main(int argc, char **argv){
     float rmse_thresh;
     float set_speed;
     bool complete_carrot = false;
-  
+    bool complete_path = false;
+    bool got_start = false;
     Eigen::Vector3f current_target(0, 0, 0); // current target waypoint
     nav_msgs::Path planned; // store planned path
     geometry_msgs::PoseStamped p; 
@@ -388,11 +389,16 @@ int main(int argc, char **argv){
         logfile_xte << "xte_carrot = [";
     }
 
-    ros::Time follow_start = ros::Time::now();
+    ros::Time follow_start;
 
     while(ros::ok()){
 
         if(got_path){
+            if(!got_start){
+                follow_start = ros::Time::now();
+                got_start = true;
+            }
+            
             layer_size = path_sz/nlayers;
 
             // Get target point
@@ -405,23 +411,29 @@ int main(int argc, char **argv){
 
             RMSE = GetRMSE(current_target);
             XTE = GetCrosstrack(current_target, idx);
-            ROS_INFO_THROTTLE(1,"RMSE: %.2f",RMSE);
-            ROS_INFO_THROTTLE(1,"XTE: %.2f", XTE);
-            ROS_INFO_THROTTLE(1,"(%d/%d): [%.2f, %.2f, %.2f]", idx, path_sz, current_target.x(), current_target.y(), current_target.z());
+            if(!complete_path){
+                ROS_INFO_THROTTLE(1,"RMSE: %.2f",RMSE);
+                ROS_INFO_THROTTLE(1,"XTE: %.2f", XTE);
+                ROS_INFO_THROTTLE(1,"(%d/%d): [%.2f, %.2f, %.2f]", idx, path_sz, current_target.x(), current_target.y(), current_target.z());
+            }
 
-            logfile_rmse << RMSE;
-            if(!std::isnan(XTE)) logfile_xte << XTE; // crosstrack can return nan in some cases when too far away, so just in case
+
+            if(!complete_path) {
+                logfile_rmse << RMSE;
+                if(!std::isnan(XTE)) logfile_xte << XTE; // crosstrack can return nan in some cases when too far away, so just in case
+            }
 
             // if reached end of path, just return to start of path and continue
             if (idx >= path_sz - 1 || complete_carrot){
-                ros::Time follow_end = ros::Time::now();
-                ros::Duration elapsed = follow_end - follow_start;
-                idx = 0;
-                logfile_rmse << "]};" << std::endl << "time = " << elapsed.toSec() << std::endl << "{";
-                logfile_xte << "];" << std::endl<< "time = " << elapsed.toSec() << std::endl << "[";
-                
+                if(!complete_path){
+                    ros::Time follow_end = ros::Time::now();
+                    ros::Duration elapsed = follow_end - follow_start;
+                    logfile_rmse << "]};" << std::endl << "time = " << elapsed.toSec() << "s"<< std::endl << "size =  " << path_sz << std::endl;
+                    logfile_xte << "];" << std::endl<< "time = " << elapsed.toSec() << "s" << std::endl;
+                    complete_path = true;
+                }
 
-            } else if (RMSE <= rmse_thresh& idx < path_sz){ // Move to next index in desired path
+            } else if (RMSE <= rmse_thresh & idx < path_sz){ // Move to next index in desired path
                 idx++;
                 current_target <<  path.poses[idx].pose.position.x, path.poses[idx].pose.position.y, path.poses[idx].pose.position.z;
                 logfile_rmse << "],[";
@@ -430,17 +442,16 @@ int main(int argc, char **argv){
                 logfile_rmse << ",";
                 if(!std::isnan(XTE)) logfile_xte << ",";
             }
-            
-            if(follow_mode == "pos"){
-                // position
+            if(complete_path){
+                // hold position above path after
                 // Add time and frame_id to message
                 pos_msg.header.stamp = ros::Time::now();
                 pos_msg.header.frame_id = "map";
-                
+                    
                 // Add current path point to message
-                pos_msg.pose.position.x = current_target.x();
-                pos_msg.pose.position.y = current_target.y();
-                pos_msg.pose.position.z = current_target.z();
+                pos_msg.pose.position.x = path.poses[0].pose.position.x;
+                pos_msg.pose.position.y = path.poses[0].pose.position.y;
+                pos_msg.pose.position.z = path.poses[0].pose.position.z + 3;
 
                 // Add desired orientation quarternion to message
                 pos_msg.pose.orientation.x = 0.0;
@@ -450,133 +461,151 @@ int main(int argc, char **argv){
 
                 // Publish message to desired trajectory topic
                 pos_pub.publish(pos_msg);
-            } else if(follow_mode == "vel"){
-                // velocity
-                float norm = sqrt(dx*dx + dy*dy + dz*dz);
-                // float set_speed = SET_VEL; // (m/s)
-                
-                // Uses the drones current position and setpoint to calculate the velocity vector but scaled to set_speed
-                vx = (dx/norm) * set_speed;
-                vy = (dy/norm) * set_speed;
-                vz = (dz/norm) * set_speed;
+            }else{
+                if(follow_mode == "pos"){
+                    // position
+                    // Add time and frame_id to message
+                    pos_msg.header.stamp = ros::Time::now();
+                    pos_msg.header.frame_id = "map";
+                    
+                    // Add current path point to message
+                    pos_msg.pose.position.x = current_target.x();
+                    pos_msg.pose.position.y = current_target.y();
+                    pos_msg.pose.position.z = current_target.z();
+
+                    // Add desired orientation quarternion to message
+                    pos_msg.pose.orientation.x = 0.0;
+                    pos_msg.pose.orientation.y = 0.0;
+                    pos_msg.pose.orientation.z = 0.0; 
+                    pos_msg.pose.orientation.w = 1.0;
+
+                    // Publish message to desired trajectory topic
+                    pos_pub.publish(pos_msg);
+                } else if(follow_mode == "vel"){
+                    // velocity
+                    float norm = sqrt(dx*dx + dy*dy + dz*dz);
+                    // float set_speed = SET_VEL; // (m/s)
+                    
+                    // Uses the drones current position and setpoint to calculate the velocity vector but scaled to set_speed
+                    vx = (dx/norm) * set_speed;
+                    vy = (dy/norm) * set_speed;
+                    vz = (dz/norm) * set_speed;
 
 
-                // Add time and frame_id to message
-                vel_msg.header.stamp = ros::Time::now();
-                vel_msg.header.frame_id = "map";
-                
-                // Filling twiststamped velocity message
-                vel_msg.twist.linear.x = vx;
-                vel_msg.twist.linear.y = vy;
-                vel_msg.twist.linear.z = vz;
-                
-                // Just setting angular velocity to 0 for now...
-                vel_msg.twist.angular.x = 0.0;
-                vel_msg.twist.angular.y = 0.0;
-                vel_msg.twist.angular.z = 0.0;
+                    // Add time and frame_id to message
+                    vel_msg.header.stamp = ros::Time::now();
+                    vel_msg.header.frame_id = "map";
+                    
+                    // Filling twiststamped velocity message
+                    vel_msg.twist.linear.x = vx;
+                    vel_msg.twist.linear.y = vy;
+                    vel_msg.twist.linear.z = vz;
+                    
+                    // Just setting angular velocity to 0 for now...
+                    vel_msg.twist.angular.x = 0.0;
+                    vel_msg.twist.angular.y = 0.0;
+                    vel_msg.twist.angular.z = 0.0;
 
-                // Publish message to desired trajectory topic
-                velocity_pub.publish(vel_msg);
-            } else if (follow_mode == "carrot"){
-                Eigen::Vector3f carrot(0,0,0);
-                bool layer_complete = false;
+                    // Publish message to desired trajectory topic
+                    velocity_pub.publish(vel_msg);
+                } else if (follow_mode == "carrot"){
+                    Eigen::Vector3f carrot(0,0,0);
+                    bool layer_complete = false;
 
-                Eigen::Vector3f drone_pos(
-                    drone_odom.pose.pose.position.x,
-                    drone_odom.pose.pose.position.y,
-                    drone_odom.pose.pose.position.z
-                );
+                    Eigen::Vector3f drone_pos(
+                        drone_odom.pose.pose.position.x,
+                        drone_odom.pose.pose.position.y,
+                        drone_odom.pose.pose.position.z
+                    );
 
-                if (current_layer_idx < nlayers){
-                    FollowCarrotLayer(current_layer_idx,
-                        layer_size,
-                        drone_pos, carrot,
-                        layer_complete,
-                        reached_first_point);
+                    if (current_layer_idx < nlayers){
+                        FollowCarrotLayer(current_layer_idx,
+                            layer_size,
+                            drone_pos, carrot,
+                            layer_complete,
+                            reached_first_point);
 
-                    if (layer_complete == true){
-                        if (current_layer_idx < nlayers){
-                            current_layer_idx++;
-                            reached_first_point = false;
-                            near_end = false; 
-                            first_carrot_set = false;  // Reset memory for new layer
-                            ROS_INFO("Switching to next layer: %d", current_layer_idx);
-                        }else{
-                            ROS_INFO("All layers completed.");
-                            carrot = drone_pos;
-                            // Just hovering now
+                        if (layer_complete == true){
+                            if (current_layer_idx < nlayers-1){
+                                current_layer_idx++;
+                                reached_first_point = false;
+                                near_end = false; 
+                                first_carrot_set = false;  // Reset memory for new layer
+                                ROS_INFO("Switching to next layer: %d", current_layer_idx);
+                            }else{
+                                ROS_INFO("All layers completed.");
+                                complete_carrot = true;
+                                // Just hovering now
+                            }
+
                         }
-
                     }
+
+                    // Display carrot!!!
+                    marker.header.stamp = ros::Time::now();
+                    // Need to define namespaace and id so that carrot can be replaced
+                    marker.ns = "carrot";
+                    marker.id = 0;
+                    marker.type = visualization_msgs::Marker::SPHERE;
+                    // Tells RViz to update marker
+                    marker.action = visualization_msgs::Marker::ADD;
+
+                    marker.pose.position.x = carrot.x();
+                    marker.pose.position.y = carrot.y();
+                    marker.pose.position.z = carrot.z();
+                    marker.pose.orientation.x = 0.0;
+                    marker.pose.orientation.y = 0.0;
+                    marker.pose.orientation.z = 0.0;
+                    marker.pose.orientation.w = 1.0;
+
+                    marker.scale.x = 0.025;
+                    marker.scale.y = 0.025;
+                    marker.scale.z = 0.025;
+
+                    marker.color.r = 1.0f;
+                    marker.color.g = 0.5f;
+                    marker.color.b = 0.0f;
+                    marker.color.a = 1.0f;
+
+                    carrot_marker_pub.publish(marker);
+
+                    if(!complete_carrot){
+                        // === VELOCITY COMMAND ===
+                        Eigen::Vector3f direction_to_carrot = carrot - drone_pos;
+                        float dist_to_carrot = direction_to_carrot.norm();
+
+                        ROS_INFO_THROTTLE(1,"(%d/%d) Carrot position: [%.2f, %.2f, %.2f]", current_layer_idx, nlayers - 1, carrot.x(), carrot.y(), carrot.z());
+
+                        if(dist_to_carrot > 0.01){ // balls 0.1 0.01
+                            // normalized gets the unit vector
+                            if (!reached_first_point){
+                                velocity = direction_to_carrot.normalized() * SET_SPEED_NEW_LAYER;
+                            }else{
+                                velocity = direction_to_carrot.normalized() * SET_SPEED; // balls
+                            }
+                        } else{
+                            velocity = Eigen::Vector3f(0, 0, 0);
+                            // If close enough, set velocity to 0 - realistically shouldnt happen but
+                        }
+                        ROS_INFO_THROTTLE(1,"v: [%f, %f, %f]", velocity.x(),velocity.y(), velocity.z());
+                    }
+
                 }
 
-                // Display carrot!!!
-                marker.header.stamp = ros::Time::now();
-                // Need to define namespaace and id so that carrot can be replaced
-                marker.ns = "carrot";
-                marker.id = 0;
-                marker.type = visualization_msgs::Marker::SPHERE;
-                // Tells RViz to update marker
-                marker.action = visualization_msgs::Marker::ADD;
+                if(follow_mode == "vel" || follow_mode == "carrot"){
+                    // Fill and publish velocity message
+                    vel_msg.header.stamp = ros::Time::now();
+                    vel_msg.header.frame_id = "map";
+                    vel_msg.twist.linear.x = velocity.x();
+                    vel_msg.twist.linear.y = velocity.y();
+                    vel_msg.twist.linear.z = velocity.z();
+                    vel_msg.twist.angular.x = 0.0;
+                    vel_msg.twist.angular.y = 0.0;
+                    vel_msg.twist.angular.z = 0.0;
 
-                marker.pose.position.x = carrot.x();
-                marker.pose.position.y = carrot.y();
-                marker.pose.position.z = carrot.z();
-                marker.pose.orientation.x = 0.0;
-                marker.pose.orientation.y = 0.0;
-                marker.pose.orientation.z = 0.0;
-                marker.pose.orientation.w = 1.0;
-
-                marker.scale.x = 0.025;
-                marker.scale.y = 0.025;
-                marker.scale.z = 0.025;
-
-                marker.color.r = 1.0f;
-                marker.color.g = 0.5f;
-                marker.color.b = 0.0f;
-                marker.color.a = 1.0f;
-
-                carrot_marker_pub.publish(marker);
-
-                // === VELOCITY COMMAND ===
-                Eigen::Vector3f direction_to_carrot = carrot - drone_pos;
-                float dist_to_carrot = direction_to_carrot.norm();
-
-                ROS_INFO_THROTTLE(1,"(%d/%d) Carrot position: [%.2f, %.2f, %.2f]", current_layer_idx, nlayers - 1, carrot.x(), carrot.y(), carrot.z());
-
-                if(dist_to_carrot > 0.01){ // balls 0.1 0.01
-                    // normalized gets the unit vector
-                    if (!reached_first_point){
-                        velocity = direction_to_carrot.normalized() * SET_SPEED_NEW_LAYER;
-                    }else{
-                        velocity = direction_to_carrot.normalized() * SET_SPEED; // balls
-                    }
-                } else{
-                    velocity = Eigen::Vector3f(0, 0, 0);
-                    // If close enough, set velocity to 0 - realistically shouldnt happen but
-                }
-                ROS_INFO_THROTTLE(1,"v: [%f, %f, %f]", velocity.x(),velocity.y(), velocity.z());
-                // Stop if near end
-                if (dist_to_carrot < 0.05 && reached_first_point && at_last_point) {
-                    velocity = Eigen::Vector3f(0, 0, 0);
-                    complete_carrot = true;
-                    // ROS_INFO("Reached final target. Hovering.");
-                    ROS_INFO_THROTTLE(1.0, "Reached final target. Hovering.");
+                    velocity_pub.publish(vel_msg);
                 }
             }
-
-
-            // Fill and publish velocity message
-            vel_msg.header.stamp = ros::Time::now();
-            vel_msg.header.frame_id = "map";
-            vel_msg.twist.linear.x = velocity.x();
-            vel_msg.twist.linear.y = velocity.y();
-            vel_msg.twist.linear.z = velocity.z();
-            vel_msg.twist.angular.x = 0.0;
-            vel_msg.twist.angular.y = 0.0;
-            vel_msg.twist.angular.z = 0.0;
-
-            velocity_pub.publish(vel_msg);
         }
 
         // Track path
