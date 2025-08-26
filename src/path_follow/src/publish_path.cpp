@@ -376,12 +376,9 @@ int main(int argc, char **argv){
     logfile_xte.open(filename_xte);
 
     if(follow_mode == "pos"){
-        logfile_rmse << "thresh = " << rmse_thresh << "m" << std::endl;
         logfile_rmse << "rmse_pos = {[";
         logfile_xte << "xte_pos = [";
     } else if(follow_mode == "vel"){
-        logfile_rmse << "thresh = " << rmse_thresh << "m" << std::endl;
-        logfile_rmse << "speed = " << set_speed << "m/s" << std::endl;
         logfile_rmse << "rmse_vel = {[";
         logfile_xte << "xte_vel = [";
     } else if(follow_mode == "carrot"){
@@ -428,8 +425,21 @@ int main(int argc, char **argv){
                 if(!complete_path){
                     ros::Time follow_end = ros::Time::now();
                     ros::Duration elapsed = follow_end - follow_start;
-                    logfile_rmse << "]};" << std::endl << "time = " << elapsed.toSec() << "s"<< std::endl << "size =  " << path_sz << std::endl;
+                    logfile_rmse << "]};" << std::endl << "time = " << elapsed.toSec() << "s" << std::endl;
+                    logfile_rmse << "size =  " << path_sz << std::endl;
                     logfile_xte << "];" << std::endl<< "time = " << elapsed.toSec() << "s" << std::endl;
+
+                    if(follow_mode == "pos"){
+                        logfile_rmse << "thresh = " << rmse_thresh << std::endl;
+                        logfile_xte << "thresh = " << rmse_thresh << std::endl;
+                    } else if(follow_mode == "vel"){
+                        logfile_rmse << "thresh = " << rmse_thresh << std::endl;
+                        logfile_rmse << "set_speed = " << set_speed << std::endl;
+                        logfile_xte << "thresh = " << rmse_thresh << std::endl;
+                        logfile_xte << "set_speed = " << set_speed << std::endl;
+                    }
+                    
+
                     complete_path = true;
                 }
 
@@ -487,27 +497,10 @@ int main(int argc, char **argv){
                     // float set_speed = SET_VEL; // (m/s)
                     
                     // Uses the drones current position and setpoint to calculate the velocity vector but scaled to set_speed
-                    vx = (dx/norm) * set_speed;
-                    vy = (dy/norm) * set_speed;
-                    vz = (dz/norm) * set_speed;
+                    velocity.x() = (dx/norm) * set_speed;
+                    velocity.y() = (dy/norm) * set_speed;
+                    velocity.z() = (dz/norm) * set_speed;
 
-
-                    // Add time and frame_id to message
-                    vel_msg.header.stamp = ros::Time::now();
-                    vel_msg.header.frame_id = "map";
-                    
-                    // Filling twiststamped velocity message
-                    vel_msg.twist.linear.x = vx;
-                    vel_msg.twist.linear.y = vy;
-                    vel_msg.twist.linear.z = vz;
-                    
-                    // Just setting angular velocity to 0 for now...
-                    vel_msg.twist.angular.x = 0.0;
-                    vel_msg.twist.angular.y = 0.0;
-                    vel_msg.twist.angular.z = 0.0;
-
-                    // Publish message to desired trajectory topic
-                    velocity_pub.publish(vel_msg);
                 } else if (follow_mode == "carrot"){
                     Eigen::Vector3f carrot(0,0,0);
                     bool layer_complete = false;
