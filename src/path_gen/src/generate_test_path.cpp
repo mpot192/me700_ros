@@ -33,6 +33,15 @@ void Cylinder(float r, int n, float h, float cyl[3][PATH_SIZE]){
   }
 }
 
+void Lemniscate(float a, int n, float h, float inf[3][PATH_SIZE]){
+  float dt = (2*M_PI)/(n-1);
+
+  for(int i = 0; i < n; i++){
+    inf[0][i] = (a*cos(i*dt))/(1+sin(i*dt)*sin(i*dt));
+    inf[1][i] = (a*cos(i*dt)*sin(i*dt))/(1+sin(i*dt)*sin(i*dt));
+    inf[2][i] = h;
+  }
+}
 int GeneratePath(float (&path)[3][PATH_SIZE], string path_style, float path_dim){
     // generate diagonal line from (1,1,1) diagonal to end 
     if(path_style == "line"){
@@ -50,6 +59,8 @@ int GeneratePath(float (&path)[3][PATH_SIZE], string path_style, float path_dim)
         }
     } else if(path_style == "circle"){
       Cylinder(path_dim, PATH_SIZE, 1.0, path);
+    } else if(path_style == "inf"){
+      Lemniscate(path_dim, PATH_SIZE, 1.0, path);
     }
     return PATH_SIZE;
 }

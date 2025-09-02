@@ -19,10 +19,6 @@ Eigen::Vector3f current_pos(0,0,0);
 #define STEP_BACK 5 // how far back to look from current waypoint for closest path point
 #define STEP_FWD 10 // same as above except forward
 
-// ---- RMSE FOLLOWING
-// #define SET_VEL 0.2 //[m/s]
-// #define RMSE_THRESH 0.2 //[m]
-
 // ---- CARROT FOLLOWING ----
 #define LOOKAHEAD_DIST 0.125            // distance from closest point on path to carrot [m]
 #define MAX_CARROT_JUMP 100         // limit single carrot movement to this distance [m]
@@ -72,12 +68,12 @@ void nlayerCallback(const std_msgs::Int32::ConstPtr& msg){
     nlayers = msg->data;
 }
 
-// Calculate RMSE from current position to current desired position waypoint 
-float GetRMSE(Eigen::Vector3f des_pos){
+// Calculate DistErr from current position to current desired position waypoint 
+float GetDistErr(Eigen::Vector3f des_pos){
   return (current_pos - des_pos).norm();
 }
 
-// calculate distance between two points (basically rmse)
+// calculate distance between two points (basically DistErr)
 float Dist3D(float x1, float y1, float z1, float x2, float y2, float z2) {
     return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
 }
@@ -147,7 +143,7 @@ float GetCrosstrack(Eigen::Vector3f des_pos, int idx){
   return (current_pos - min_pt).norm();
 }
 
-bool FollowCarrotLayer(int current_layer_idx, int layer_size, const Eigen::Vector3f& drone_pos, Eigen::Vector3f& carrot, bool& layer_completed, bool& reached_first_point){
+bool FollowCarrotLayer(int current_layer_idx, int layer_size, float set_speed, const Eigen::Vector3f& drone_pos, Eigen::Vector3f& carrot, bool& layer_completed, bool& reached_first_point, int& nearest_waypoint){
 
     // PHASE 1: Go to first point
     if (!reached_first_point) {
@@ -191,18 +187,16 @@ bool FollowCarrotLayer(int current_layer_idx, int layer_size, const Eigen::Vecto
                 path.poses[current_layer_idx*layer_size + i].pose.position.z
             );
 
-             ROS_INFO_THROTTLE(0.5,"Distance : [%.2f]",dist);
-
-
             // Finding the index of the point thats closest to the drone
             if (dist < min_dist) {
                 min_dist = dist;
                 closest_idx = i;
+                nearest_waypoint = current_layer_idx*layer_size + closest_idx;
             }
         }
         prev_closest_idx = closest_idx; // Update memory for next iteration
 
-        ROS_INFO_THROTTLE(2,"Closest point: [%.2f, %.2f, %.2f]", path.poses[current_layer_idx*layer_size + closest_idx].pose.position.x, path.poses[current_layer_idx*layer_size + closest_idx].pose.position.y, path.poses[current_layer_idx*layer_size + closest_idx].pose.position.z);
+        // ROS_INFO_THROTTLE(2,"Closest point: [%.2f, %.2f, %.2f]", path.poses[current_layer_idx*layer_size + closest_idx].pose.position.x, path.poses[current_layer_idx*layer_size + closest_idx].pose.position.y, path.poses[current_layer_idx*layer_size + closest_idx].pose.position.z);
 
         // 2. Walk forward along path to find carrot using interpolation
         float remaining_lookahead = LOOKAHEAD_DIST;
@@ -265,7 +259,7 @@ bool FollowCarrotLayer(int current_layer_idx, int layer_size, const Eigen::Vecto
         float dist_to_last_point = (last_point - drone_pos).norm();
 
         // Condition 1: We're very close to the last waypoint
-        bool close_to_last_point = (dist_to_last_point < 0.05f); // 0.05 hi
+        bool close_to_last_point = (dist_to_last_point < 1*set_speed); //vary with set speed to avoid getting stuck at final point
         // Condition 2: We've progressed far along the path
         if (j >= layer_size - 2){
             near_end = true;
@@ -312,9 +306,9 @@ int main(int argc, char **argv){
     int num_of_layers = 0;
     int current_layer = 0;
 
-    // RMSE Following
+    // DistErr Following
     int idx = 0; // current index in path
-    float RMSE; // store root mean squared error
+    float distErr; // store root mean squared error
     float XTE; // store cross track error
     
     // for generating velocity command
@@ -326,8 +320,9 @@ int main(int argc, char **argv){
     float vy;
     float vz;
 
-    float rmse_thresh;
+    float dist_err_thresh;
     float set_speed;
+    float variable_speed;
     bool complete_carrot = false;
     bool complete_path = false;
     bool got_start = false;
@@ -352,12 +347,14 @@ int main(int argc, char **argv){
     }
 
     if(follow_mode == "pos" || follow_mode == "vel"){
-        rmse_thresh = std::stof(argv[2]);
+        dist_err_thresh = std::stof(argv[2]);
     } 
     if(follow_mode == "vel"){
         set_speed = std::stof(argv[3]);
     }
-
+    if(follow_mode == "carrot"){
+        set_speed = std::stof(argv[2]);
+    }
 
 
     // LOG FILE INIT
@@ -366,23 +363,23 @@ int main(int argc, char **argv){
                    now.time_since_epoch()
                ).count();
 
-    std::string filename_rmse =  "/home/matt/catkin_ws/bag/path_follow_rmse_log_" + std::to_string(ms) + ".txt";
+    std::string filename_dist_err =  "/home/matt/catkin_ws/bag/path_follow_dist_err_log_" + std::to_string(ms) + ".txt";
     std::string filename_xte = "/home/matt/catkin_ws/bag/path_follow_xte_log_" + std::to_string(ms) + ".txt";
 
-    std::ofstream logfile_rmse; // logfile for rmse output in matlab cell array format
-    logfile_rmse.open(filename_rmse);
+    std::ofstream logfile_dist_err; // logfile for dist_err output in matlab cell array format
+    logfile_dist_err.open(filename_dist_err);
     
     std::ofstream logfile_xte; // logfile for crosstrack error in regular matlab array format
     logfile_xte.open(filename_xte);
 
     if(follow_mode == "pos"){
-        logfile_rmse << "rmse_pos = {[";
+        logfile_dist_err << "dist_err_pos = {[";
         logfile_xte << "xte_pos = [";
     } else if(follow_mode == "vel"){
-        logfile_rmse << "rmse_vel = {[";
+        logfile_dist_err << "dist_err_vel = {[";
         logfile_xte << "xte_vel = [";
     } else if(follow_mode == "carrot"){
-        logfile_rmse << "rmse_carrot = {[";
+        logfile_dist_err << "dist_err_carrot = {[";
         logfile_xte << "xte_carrot = [";
     }
 
@@ -406,17 +403,17 @@ int main(int argc, char **argv){
             dy = current_target.y() - drone_odom.pose.pose.position.y;
             dz = current_target.z() - drone_odom.pose.pose.position.z;
 
-            RMSE = GetRMSE(current_target);
+            distErr = GetDistErr(current_target);
             XTE = GetCrosstrack(current_target, idx);
             if(!complete_path){
-                ROS_INFO_THROTTLE(1,"RMSE: %.2f",RMSE);
+                ROS_INFO_THROTTLE(1,"DistErr: %.2f",distErr);
                 ROS_INFO_THROTTLE(1,"XTE: %.2f", XTE);
                 ROS_INFO_THROTTLE(1,"(%d/%d): [%.2f, %.2f, %.2f]", idx, path_sz, current_target.x(), current_target.y(), current_target.z());
             }
 
 
             if(!complete_path) {
-                logfile_rmse << RMSE;
+                logfile_dist_err << distErr;
                 if(!std::isnan(XTE)) logfile_xte << XTE; // crosstrack can return nan in some cases when too far away, so just in case
             }
 
@@ -425,17 +422,20 @@ int main(int argc, char **argv){
                 if(!complete_path){
                     ros::Time follow_end = ros::Time::now();
                     ros::Duration elapsed = follow_end - follow_start;
-                    logfile_rmse << "]};" << std::endl << "time = " << elapsed.toSec() << "s" << std::endl;
-                    logfile_rmse << "size =  " << path_sz << std::endl;
+                    logfile_dist_err << "]};" << std::endl << "time = " << elapsed.toSec() << "s" << std::endl;
+                    logfile_dist_err << "size =  " << path_sz << std::endl;
                     logfile_xte << "];" << std::endl<< "time = " << elapsed.toSec() << "s" << std::endl;
 
                     if(follow_mode == "pos"){
-                        logfile_rmse << "thresh = " << rmse_thresh << std::endl;
-                        logfile_xte << "thresh = " << rmse_thresh << std::endl;
+                        logfile_dist_err << "thresh = " << dist_err_thresh << std::endl;
+                        logfile_xte << "thresh = " << dist_err_thresh << std::endl;
                     } else if(follow_mode == "vel"){
-                        logfile_rmse << "thresh = " << rmse_thresh << std::endl;
-                        logfile_rmse << "set_speed = " << set_speed << std::endl;
-                        logfile_xte << "thresh = " << rmse_thresh << std::endl;
+                        logfile_dist_err << "thresh = " << dist_err_thresh << std::endl;
+                        logfile_dist_err << "set_speed = " << set_speed << std::endl;
+                        logfile_xte << "thresh = " << dist_err_thresh << std::endl;
+                        logfile_xte << "set_speed = " << set_speed << std::endl;
+                    } else if(follow_mode == "carrot"){
+                        logfile_dist_err << "set_speed = " << set_speed << std::endl;
                         logfile_xte << "set_speed = " << set_speed << std::endl;
                     }
                     
@@ -443,13 +443,13 @@ int main(int argc, char **argv){
                     complete_path = true;
                 }
 
-            } else if (RMSE <= rmse_thresh & idx < path_sz){ // Move to next index in desired path
+            } else if (distErr <= dist_err_thresh & idx < path_sz){ // Move to next index in desired path
                 idx++;
                 current_target <<  path.poses[idx].pose.position.x, path.poses[idx].pose.position.y, path.poses[idx].pose.position.z;
-                logfile_rmse << "],[";
+                logfile_dist_err << "],[";
                 if(!std::isnan(XTE)) logfile_xte << ",";
             } else{ // else just output data as normal
-                logfile_rmse << ",";
+                logfile_dist_err << ",";
                 if(!std::isnan(XTE)) logfile_xte << ",";
             }
             if(complete_path){
@@ -504,6 +504,7 @@ int main(int argc, char **argv){
                 } else if (follow_mode == "carrot"){
                     Eigen::Vector3f carrot(0,0,0);
                     bool layer_complete = false;
+                    
 
                     Eigen::Vector3f drone_pos(
                         drone_odom.pose.pose.position.x,
@@ -514,9 +515,10 @@ int main(int argc, char **argv){
                     if (current_layer_idx < nlayers){
                         FollowCarrotLayer(current_layer_idx,
                             layer_size,
+                            set_speed,
                             drone_pos, carrot,
                             layer_complete,
-                            reached_first_point);
+                            reached_first_point, idx);
 
                         if (layer_complete == true){
                             if (current_layer_idx < nlayers-1){
@@ -568,19 +570,21 @@ int main(int argc, char **argv){
                         float dist_to_carrot = direction_to_carrot.norm();
 
                         ROS_INFO_THROTTLE(1,"(%d/%d) Carrot position: [%.2f, %.2f, %.2f]", current_layer_idx, nlayers - 1, carrot.x(), carrot.y(), carrot.z());
-
+                        
                         if(dist_to_carrot > 0.01){ // balls 0.1 0.01
+                            variable_speed = std::min(set_speed, (float)((set_speed/2) + (set_speed/2)*(dist_to_carrot/LOOKAHEAD_DIST - LOOKAHEAD_DIST))); // vary speed between set_speed/2 and set_speed
                             // normalized gets the unit vector
+                            // could set speed to be different for moving to first point in layer if desired
                             if (!reached_first_point){
-                                velocity = direction_to_carrot.normalized() * SET_SPEED_NEW_LAYER;
+                                velocity = direction_to_carrot.normalized() * set_speed;
                             }else{
-                                velocity = direction_to_carrot.normalized() * SET_SPEED; // balls
+                                velocity = direction_to_carrot.normalized() * set_speed; // balls
                             }
                         } else{
                             velocity = Eigen::Vector3f(0, 0, 0);
                             // If close enough, set velocity to 0 - realistically shouldnt happen but
                         }
-                        ROS_INFO_THROTTLE(1,"v: [%f, %f, %f]", velocity.x(),velocity.y(), velocity.z());
+                        ROS_INFO_THROTTLE(1,"v: (%f) [%f, %f, %f]", variable_speed, velocity.x(),velocity.y(), velocity.z());
                     }
 
                 }
@@ -625,7 +629,7 @@ int main(int argc, char **argv){
         // Wait
         loop_rate.sleep();
     }
-    logfile_rmse.close();
+    logfile_dist_err.close();
     logfile_xte.close();
     return 0;
 
