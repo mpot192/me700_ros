@@ -57,7 +57,8 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "dense": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/matt/catkin_ws/devel/lib/python3/dist-packages",

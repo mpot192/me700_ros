@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include "path_gen/PCHandler.hpp"
+#include <chrono>
 
 using namespace std;
 
@@ -26,8 +27,9 @@ using namespace std;
 
 // INPUT PARAMETERS
 #define R_AVOID 0.1 // inner radius to avoid cutting [m]
-#define H_LAYER 0.25 // distance between cutting layers [m]
-#define D_CUT 0.4 // diameter of cutting head [m] 
+#define H_LAYER 0.2 // distance between cutting layers [m]
+#define D_CUT 0.4 // proportion of total height to cut [m] 
+#define MAX_DEPTH 1.0 // maximum total path depth [m]
 #define UNCERTAINTY 0.9 // fraction inside bounding box to be used for path generation
 #define MIN_SPACE 0.15 // minimum spacing between spiral loops/concentric circles in a layer
 #define N_LAYER_POINTS 50 // number of points in a layer 
@@ -74,7 +76,7 @@ void Spiral(float r_min, float r_max, int n_points, int n_spiral, float h, float
   }
 }
 
-int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw, float r_avoid, float h_layer, float d_cut, float u){
+int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw, float r_avoid, float h_layer, float d_cut, float u, string do_linear){
 
   float bbwu = bbw * u; // scale bounding box to uncertainty
   float bbhu = bbh * u; 
@@ -96,11 +98,17 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   float dcx = dcpt.x + drone_pos.pose.pose.position.x;
   float dcy = dcpt.y + drone_pos.pose.pose.position.y;
   float dcz = drone_pos.pose.pose.position.z;
-
   ROS_INFO("GENERATING PATH CENTRED AT [%f, %f]", dcx, dcy);
-  std::ofstream logfile;
-  logfile.open("/home/matt/catkin_ws/bag/pathgen_log.txt");
-  logfile << "Path centered at: " << dcx << ", " << dcy << endl;
+
+  // LOG FILE INIT
+  auto now = std::chrono::system_clock::now();
+  auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+
+  std::string filename =  "/home/matt/catkin_ws/bag/pathgen_log_" + std::to_string(ms) + ".txt";
+  std::ofstream logfile; // logfile for dist_err output in matlab cell array format
+  logfile.open(filename);
+
+  logfile << "Path centered at: " << dcpt.x << ", " << dcpt.y << endl;
 
   // fit circle within 
   if(bbhu < bbwu){
@@ -135,8 +143,16 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   endh = minh + (maxh - minh)*d_cut;
   float total_depth = endh-starth;
 
+  if(total_depth > MAX_DEPTH){
+    total_depth = MAX_DEPTH;
+  }
+
+  logfile << "Starting at " << starth << "m" << endl;
+  logfile << "Ending at " << starth + total_depth << "m" << endl;
+  logfile << "Depth = " << total_depth << "m" << " (" << d_cut*100 << "%)"<< endl;
+
   // get layer depths
-  nlayers = ceil((endh-starth)/h_layer);
+  nlayers = ceil((total_depth)/h_layer);
   if(nlayers > 1){
     ROS_INFO("Generating path with %d layers.", nlayers);
   } 
@@ -181,17 +197,19 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   }
 
   // fit radii based on linear relationship between start and end instead
-  float r_min = layer_r[0];
-  float r_max = layer_r[nlayers - 1];
-  float m = (r_max-r_min)/total_depth;
-  float r_fit;
-  ROS_INFO("Layer 0 r fit = %.2f at d = %.2f",r_min, layer_depths[0]);
-  for(int i = 1; i < nlayers - 1; i++){
-    r_fit = m*(layer_depths[i] - starth) + r_min;
-    ROS_INFO("Layer %d r fit = %.2f at d = %.2f",i, r_fit, layer_depths[i]);
-    layer_r[i] = r_fit;
+  if(do_linear == "true"){
+    float r_min = layer_r[0];
+    float r_max = layer_r[nlayers - 1];
+    float m = (r_max-r_min)/total_depth;
+    float r_fit;
+    ROS_INFO("Layer 0 r fit = %.2f at d = %.2f",r_min, layer_depths[0]);
+    for(int i = 1; i < nlayers - 1; i++){
+      r_fit = m*(layer_depths[i] - starth) + r_min;
+      ROS_INFO("Layer %d r fit = %.2f at d = %.2f",i, r_fit, layer_depths[i]);
+      layer_r[i] = r_fit;
+    }
+    ROS_INFO("Layer %d r fit = %.2f at d = %.2f",nlayers - 1, r_max, layer_depths[nlayers - 1]);
   }
-  ROS_INFO("Layer %d r fit = %.2f at d = %.2f",nlayers - 1, r_max, layer_depths[nlayers - 1]);
 
   int n_points = N_LAYER_POINTS; // number of points between layers
   int n_spiral; // maximum (target) number of spirals in spiral layer
@@ -248,14 +266,21 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   logfile << "Path size = " << p_size << endl;
   logfile << "{";
   for(int i = 0; i < 3;i++){
-    logfile << "{";
+    logfile << "[";
     for(int j = 0; j < p_size; j++){
-      logfile << path[i][j];
+      if(i == 0){
+        logfile << path[i][j] - dcx;
+      } else if(i == 1){
+        logfile << path[i][j] - dcy;
+      }else{
+        logfile << path[i][j];
+      }
+      
       if(j != p_size - 1){
         logfile << ",";
       }
     }
-    logfile << "}";
+    logfile << "]";
     if(i != 2){
       logfile << ",";
     }
@@ -288,8 +313,8 @@ int main (int argc, char *argv[]) {
   static bool done = false; 
 
   // check that bounding box has been given
-  if (argc < 2) {
-      ROS_ERROR("Missing required command line arguments <bounding box height> <bounding box width>");
+  if (argc < 3) {
+      ROS_ERROR("Missing required command line arguments <bounding box height> <bounding box width> <linear?>");
       ros::shutdown(); 
       return -1;      
   }
@@ -297,6 +322,7 @@ int main (int argc, char *argv[]) {
   // set bounding box size based on input arguments 
   int bb_height = std::atoi(argv[1]);
   int bb_width = std::atoi(argv[2]);
+  std::string do_linear = argv[3];
 
   geometry_msgs::PoseStamped p;
   while (ros::ok()){
@@ -334,7 +360,7 @@ int main (int argc, char *argv[]) {
 
     // generate path first
     if(first && handler.exists){
-      size = GeneratePath(path, BBX, BBY, bb_height, bb_width, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY);
+      size = GeneratePath(path, BBX, BBY, bb_height, bb_width, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY, do_linear);
       handler.GenerateModelPC(drone_pos.pose.pose.position.x, drone_pos.pose.pose.position.y, drone_pos.pose.pose.position.z);
       ROS_INFO("Generated path of size: %d!",size);
       first = false;

@@ -1,0 +1,20 @@
+[0.170] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
+[0.180] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
+[0.184] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
+[0.189] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
+[0.199] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
+[0.213] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
+[0.229] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
+[0.242] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
+[0.256] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
+ignoreboth or ignorespace present in bash HISTCONTROL setting, showing running command will not be robust
+ignoreboth or ignorespace present in bash HISTCONTROL setting, showing running command will not be robust
+ignoreboth or ignorespace present in bash HISTCONTROL setting, showing running command will not be robust
+ignoreboth or ignorespace present in bash HISTCONTROL setting, showing running command will not be robust
+[0.305] [glfw error 65544]: Notify: Failed to get server capabilities error: [org.freedesktop.DBus.Error.NoReply] Did not receive a reply. Possible causes include: the remote application did not send a reply, the message bus security policy blocked the reply, the reply timeout expired, or the network connection was broken.
+ignoreboth or ignorespace present in bash HISTCONTROL setting, showing running command will not be robust
+ignoreboth or ignorespace present in bash HISTCONTROL setting, showing running command will not be robust
+ignoreboth or ignorespace present in bash HISTCONTROL setting, showing running command will not be robust
+ignoreboth or ignorespace present in bash HISTCONTROL setting, showing running command will not be robust
+ignoreboth or ignorespace present in bash HISTCONTROL setting, showing running command will not be robust
+[535.825] Could not move child process into a systemd scope: [Errno 30] Failed to call StartTransientUnit: org.freedesktop.DBus.Error.PropertyReadOnly: Cannot set property OOMPolicy, or unknown property.
