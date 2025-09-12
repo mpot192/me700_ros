@@ -61,13 +61,13 @@ void Cylinder(float r, int n, float h, float cyl[][3]){
 }
 
 // generate a spiral based on input parameters
-void Spiral(float r_min, float r_max, int n_points, int n_spiral, float h, float sp[][3]){
+void Spiral(float r_min, float r_max, int n_points, int n_spiral, float h, int idx_start, float sp[][3]){
 
   float dt = (2*M_PI) * (n_spiral/(float)n_points); 
   float dr = (r_max - r_min)/n_points; 
 
   // generate spiral (outside -> in)
-  int cnt = 0;
+  int cnt = idx_start;
   for(int i = n_points - 1; i >= 0; i--){
     sp[cnt][0] = (r_min+dr*i)*cos(i*dt);
     sp[cnt][1] = (r_min+dr*i)*sin(i*dt);
@@ -212,8 +212,9 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   }
 
   int n_points = N_LAYER_POINTS; // number of points between layers
+  int actual_points;
   int n_spiral; // maximum (target) number of spirals in spiral layer
-  float cyl[n_points][3]; // layer
+  float cyl[3*n_points][3]; // layer
   float pathx[PATH_SIZE];
   float pathy[PATH_SIZE];
   float pathz[PATH_SIZE];
@@ -237,12 +238,15 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
     if(n_spiral == 1){ // circle
       ROS_INFO("Generating Layer %d as a circle with r = %.2fm.", i, r);
       Cylinder(r, n_points, layer_depths[i], cyl);
+      actual_points = n_points;
     } else{
-      Spiral(R_AVOID, r, n_points, n_spiral, layer_depths[i], cyl);
+      Cylinder(r, n_points, layer_depths[i], cyl);
+      Spiral(R_AVOID, r, n_points, n_spiral, layer_depths[i], n_points, cyl);
+      actual_points = n_points*2;
       ROS_INFO("Generating Layer %d as a spiral with r = %.2fm and n = %d (/%d).", i, r, n_spiral, N_SPIRALS);
     }
     
-    for(int j = 0; j < n_points; j++){
+    for(int j = 0; j < actual_points; j++){
       
       // store in path arrays
       pathx[p_size + j] = (cyl[j][0] * SF) + dcx;
@@ -250,7 +254,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
       pathz[p_size + j] = (dcz - cyl[j][2]) + H_OFFSET;
       logfile << j << " " << "[" << cyl[j][0] + dcx << ", " << cyl[j][1] + dcy << ", " <<  cyl[j][2]<< "]" << endl;
     }
-    p_size += n_points;
+    p_size += actual_points;
     
   }
 
