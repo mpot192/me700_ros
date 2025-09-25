@@ -27,7 +27,7 @@ using namespace std;
 
 // INPUT PARAMETERS
 #define R_AVOID 0.1 // inner radius to avoid cutting [m]
-#define H_LAYER 0.2 // distance between cutting layers [m]
+// #define H_LAYER 0.2 // distance between cutting layers [m]
 #define D_CUT 0.4 // proportion of total height to cut [m] 
 #define MAX_DEPTH 1.0 // maximum total path depth [m]
 #define UNCERTAINTY 0.9 // fraction inside bounding box to be used for path generation
@@ -76,7 +76,7 @@ void Spiral(float r_min, float r_max, int n_points, int n_spiral, float h, int i
   }
 }
 
-int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw, float r_avoid, float h_layer, float d_cut, float u, string do_linear){
+int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw, float r_avoid, float h_layer, int n_spiral_init, float d_cut, float u, string do_linear){
 
   float bbwu = bbw * u; // scale bounding box to uncertainty
   float bbhu = bbh * u; 
@@ -104,11 +104,19 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   auto now = std::chrono::system_clock::now();
   auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
-  std::string filename =  "/home/matt/catkin_ws/bag/pathgen_log_" + std::to_string(ms) + ".txt";
+  std::string timestamp = std::to_string(ms);
+  std::string filename =  "/home/matt/catkin_ws/bag/pathgen_log_" + timestamp + ".txt";
+  std::string filename_csv =  "/home/matt/catkin_ws/bag/pathgen_log_" + timestamp + ".csv";
   std::ofstream logfile; // logfile for dist_err output in matlab cell array format
+  std::ofstream logfile_csv;
   logfile.open(filename);
+  logfile_csv.open(filename_csv);
 
   logfile << "Path centered at: " << dcpt.x << ", " << dcpt.y << endl;
+  logfile << "-----PARAMETERS-----" << endl;
+  logfile << "n_spiral (max) = " << n_spiral_init << endl;
+  logfile << "layer_height = " << h_layer << endl;
+  logfile << "--------------------" << endl;
 
   // fit circle within 
   if(bbhu < bbwu){
@@ -224,7 +232,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   // generate layers
   for(int i = 0; i < nlayers; i++){
     r = layer_r[i];
-    n_spiral = N_SPIRALS;
+    n_spiral = n_spiral_init;
     // saturate to minimum radius to avoid stem
     if(r < R_AVOID){
       r = R_AVOID;
@@ -291,6 +299,12 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   }
   logfile << "}";
   logfile.close(); 
+
+  // output to csv logfile for data processing
+  for(int i = 0; i < p_size; i++){
+    logfile_csv << path[0][i] - dcx << "," << path[1][i] - dcy << "," << path[2][i] << "\n";
+  }
+  logfile_csv.close();
   return p_size;
 }
 
@@ -317,8 +331,8 @@ int main (int argc, char *argv[]) {
   static bool done = false; 
 
   // check that bounding box has been given
-  if (argc < 3) {
-      ROS_ERROR("Missing required command line arguments <bounding box height> <bounding box width> <linear?>");
+  if (argc < 5) {
+      ROS_ERROR("Missing required command line arguments <bounding box height> <bounding box width> <linear?> <layer height> <n_spiral>");
       ros::shutdown(); 
       return -1;      
   }
@@ -327,6 +341,8 @@ int main (int argc, char *argv[]) {
   int bb_height = std::atoi(argv[1]);
   int bb_width = std::atoi(argv[2]);
   std::string do_linear = argv[3];
+  float layer_height = std::atof(argv[4]);
+  float n_spiral = std::atof(argv[5]);
 
   geometry_msgs::PoseStamped p;
   while (ros::ok()){
@@ -364,7 +380,7 @@ int main (int argc, char *argv[]) {
 
     // generate path first
     if(first && handler.exists){
-      size = GeneratePath(path, BBX, BBY, bb_height, bb_width, R_AVOID, H_LAYER, D_CUT, UNCERTAINTY, do_linear);
+      size = GeneratePath(path, BBX, BBY, bb_height, bb_width, R_AVOID, layer_height, n_spiral, D_CUT, UNCERTAINTY, do_linear);
       handler.GenerateModelPC(drone_pos.pose.pose.position.x, drone_pos.pose.pose.position.y, drone_pos.pose.pose.position.z);
       ROS_INFO("Generated path of size: %d!",size);
       first = false;
