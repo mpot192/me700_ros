@@ -1,0 +1,10 @@
+Path centered at: 0.00271558, 0.00271558
+-----PARAMETERS-----
+n_spiral (max) = 3
+layer_height = 0.3
+--------------------
+Starting at 3.06906m
+Ending at 3.7448m
+Depth = 0.675744m (40%)
+Layer 0 radius: 0.204143
+Layer 1 radius: 0.534109

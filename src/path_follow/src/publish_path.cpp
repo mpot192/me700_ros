@@ -28,7 +28,7 @@ Eigen::Vector3f current_pos(0,0,0);
 
 #define SET_SPEED 0.18                  // speed for general carrot following [m/s]
 #define SET_SPEED_NEW_LAYER 0.13        // speed for moving to new layer [m/s]
-
+#define FOLLOW_REPEATS 3                // number of times to repeat a path before stopping
 // message objects for getting current drone odom and desired path
 nav_msgs::Odometry drone_odom;
 nav_msgs::Path path;
@@ -298,6 +298,10 @@ int main(int argc, char **argv){
     visualization_msgs::Marker marker;
     marker.header.frame_id = "map";
 
+    // just for testing purposes to know when path following is complete
+    ros::Publisher info_pub = n.advertise<std_msgs::String>("/status", 1);
+    std_msgs::String status_msg;
+    bool complete_pub = false;
     // loop at 5 Hz
     ros::Rate loop_rate(5);
 
@@ -308,6 +312,7 @@ int main(int argc, char **argv){
 
     // DistErr Following
     int idx = 0; // current index in path
+    int repeat_count = 0;
     float distErr; // store root mean squared error
     float XTE; // store cross track error
     
@@ -326,6 +331,8 @@ int main(int argc, char **argv){
     bool complete_carrot = false;
     bool complete_path = false;
     bool got_start = false;
+
+
     Eigen::Vector3f current_target(0, 0, 0); // current target waypoint
     nav_msgs::Path planned; // store planned path
     geometry_msgs::PoseStamped p; 
@@ -365,12 +372,20 @@ int main(int argc, char **argv){
 
     std::string filename_dist_err =  "/home/matt/catkin_ws/bag/path_follow_dist_err_log_" + std::to_string(ms) + ".txt";
     std::string filename_xte = "/home/matt/catkin_ws/bag/path_follow_xte_log_" + std::to_string(ms) + ".txt";
+    std::string filename_dist_err_csv =  "/home/matt/catkin_ws/bag/path_follow_dist_err_log_" + std::to_string(ms) + ".csv";
+    std::string filename_xte_csv = "/home/matt/catkin_ws/bag/path_follow_xte_log_" + std::to_string(ms) + ".csv";
 
     std::ofstream logfile_dist_err; // logfile for dist_err output in matlab cell array format
     logfile_dist_err.open(filename_dist_err);
     
     std::ofstream logfile_xte; // logfile for crosstrack error in regular matlab array format
     logfile_xte.open(filename_xte);
+
+    std::ofstream logfile_dist_err_csv;
+    logfile_dist_err_csv.open(filename_dist_err_csv);
+
+    std::ofstream logfile_xte_csv;
+    logfile_xte_csv.open(filename_xte_csv);
 
     if(follow_mode == "pos"){
         logfile_dist_err << "dist_err_pos = {[";
@@ -382,6 +397,9 @@ int main(int argc, char **argv){
         logfile_dist_err << "dist_err_carrot = {[";
         logfile_xte << "xte_carrot = [";
     }
+
+    logfile_dist_err_csv << "dist_err,waypoint_idx\n";
+    logfile_xte_csv << "xte,waypoint_idx\n";
 
     ros::Time follow_start;
 
@@ -405,21 +423,45 @@ int main(int argc, char **argv){
 
             distErr = GetDistErr(current_target);
             XTE = GetCrosstrack(current_target, idx);
-            if(!complete_path){
+            // data, only start once reached first point in the path
+            if(!complete_path && idx > 0){
                 ROS_INFO_THROTTLE(1,"DistErr: %.2f",distErr);
                 ROS_INFO_THROTTLE(1,"XTE: %.2f", XTE);
                 ROS_INFO_THROTTLE(1,"(%d/%d): [%.2f, %.2f, %.2f]", idx, path_sz, current_target.x(), current_target.y(), current_target.z());
-            }
 
-
-            if(!complete_path) {
                 logfile_dist_err << distErr;
-                if(!std::isnan(XTE)) logfile_xte << XTE; // crosstrack can return nan in some cases when too far away, so just in case
+                logfile_dist_err_csv << distErr << "," << idx << "\n";
+                // crosstrack can return nan in some cases when too far away, so just in case
+                if(!std::isnan(XTE)){
+                    logfile_xte << XTE; 
+                    logfile_xte_csv << XTE << "," << idx << "\n";
+                }
             }
 
-            // if reached end of path, just return to start of path and continue
-            if (idx >= path_sz - 1 || complete_carrot){
-                if(!complete_path){
+
+            if ((idx >= path_sz - 1 || complete_carrot) && !complete_path){
+                
+                if(repeat_count < FOLLOW_REPEATS - 1){
+                    repeat_count++;
+                    idx = 0;
+
+                    ROS_INFO("RETURNING FOR REPEAT %d", repeat_count);
+                    // reset carrot variables
+                    complete_carrot = false;
+                    current_layer_idx = 0;
+                    reached_first_point = false;
+                    first_carrot_set = false;
+                    near_end = false;
+                    
+                    // set target back to zero
+                    // Get target point
+                    current_target <<  path.poses[idx].pose.position.x, path.poses[idx].pose.position.y, path.poses[idx].pose.position.z;
+                    
+                    // calcualte error from path
+                    dx = current_target.x() - drone_odom.pose.pose.position.x;
+                    dy = current_target.y() - drone_odom.pose.pose.position.y;
+                    dz = current_target.z() - drone_odom.pose.pose.position.z;
+                }else{
                     ros::Time follow_end = ros::Time::now();
                     ros::Duration elapsed = follow_end - follow_start;
                     logfile_dist_err << "]};" << std::endl << "time = " << elapsed.toSec() << "s" << std::endl;
@@ -438,7 +480,6 @@ int main(int argc, char **argv){
                         logfile_dist_err << "set_speed = " << set_speed << std::endl;
                         logfile_xte << "set_speed = " << set_speed << std::endl;
                     }
-                    
 
                     complete_path = true;
                 }
@@ -471,6 +512,14 @@ int main(int argc, char **argv){
 
                 // Publish message to desired trajectory topic
                 pos_pub.publish(pos_msg);
+
+                // publish message to say that flight is complete
+                if(!complete_pub){
+                    status_msg.data = "FLIGHT_COMPLETE";
+                    info_pub.publish(status_msg);
+                    complete_pub = true;
+                }
+
             }else{
                 if(follow_mode == "pos"){
                     // position
@@ -529,6 +578,7 @@ int main(int argc, char **argv){
                                 ROS_INFO("Switching to next layer: %d", current_layer_idx);
                             }else{
                                 ROS_INFO("All layers completed.");
+                                layer_complete = false;
                                 complete_carrot = true;
                                 // Just hovering now
                             }
@@ -631,6 +681,8 @@ int main(int argc, char **argv){
     }
     logfile_dist_err.close();
     logfile_xte.close();
+    logfile_dist_err_csv.close();
+    logfile_xte_csv.close();
     return 0;
 
 }
