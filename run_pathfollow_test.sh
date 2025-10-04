@@ -75,4 +75,6 @@ for p in "${PARAMS[@]}"; do
     # Kill the node before next run
     kill $PID
     wait $PID 2>/dev/null
+    
+    sleep 5 
 done
