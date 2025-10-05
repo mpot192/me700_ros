@@ -2,49 +2,50 @@
 
 # all parameter combos for path gen
 PARAMS=(
-  # --- pos sweep ---
-  "pos 0.1"
-  "pos 0.2"
-  "pos 0.3"
-  "pos 0.4"
-  "pos 0.5"
-
-  # --- vel sweep (pairs) ---
-  "vel 0.1 0.1"
-  "vel 0.1 0.2"
-  "vel 0.1 0.3"
+#   --- pos sweep ---
+#   "pos 0.1"
+#   "pos 0.2"
+#   "pos 0.3"
+#   "pos 0.4"
+#   "pos 0.5"
+# 
+#   --- vel sweep (pairs) ---
+#   "vel 0.1 0.1"
+#   "vel 0.1 0.2"
+#   "vel 0.1 0.3"
 #   "vel 0.1 0.4" always fails
 #   "vel 0.1 0.5" always fails
-
-  "vel 0.2 0.1"
-  "vel 0.2 0.2"
-  "vel 0.2 0.3"
-  "vel 0.2 0.4"
-  "vel 0.2 0.5"
-
-  "vel 0.3 0.1"
-  "vel 0.3 0.2"
-  "vel 0.3 0.3"
-  "vel 0.3 0.4"
-  "vel 0.3 0.5"
-
-  "vel 0.4 0.1"
-  "vel 0.4 0.2"
-  "vel 0.4 0.3"
-  "vel 0.4 0.4"
-  "vel 0.4 0.5"
-
-  "vel 0.5 0.1"
-  "vel 0.5 0.2"
-  "vel 0.5 0.3"
-  "vel 0.5 0.4"
-  "vel 0.5 0.5"
-
-  # --- carrot sweep ---
-  "carrot 0.1"
-  "carrot 0.2"
-  "carrot 0.3"
-  "carrot 0.4"
+# 
+#   "vel 0.2 0.1"
+#   "vel 0.2 0.2"
+#   "vel 0.2 0.3"
+#   "vel 0.2 0.4"
+#   "vel 0.2 0.5"
+# 
+#   "vel 0.3 0.1"
+#   "vel 0.3 0.2"
+#   "vel 0.3 0.3"
+#   "vel 0.3 0.4"
+#   "vel 0.3 0.5"
+# 
+#   "vel 0.4 0.1"
+#   "vel 0.4 0.2"
+#   "vel 0.4 0.3"
+#   "vel 0.4 0.4"
+#   "vel 0.4 0.5"
+# 
+#   "vel 0.5 0.1"
+#   "vel 0.5 0.2"
+#   "vel 0.5 0.3"
+#   "vel 0.5 0.4"
+#   "vel 0.5 0.5"
+# 
+#   --- carrot sweep ---
+#   "carrot 0.1"
+#   "carrot 0.2"
+#   "carrot 0.3"
+#   "carrot 0.4"
+  "carrot 0.5"
   "carrot 0.5"
 )
 
