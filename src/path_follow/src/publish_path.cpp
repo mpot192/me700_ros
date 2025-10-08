@@ -20,7 +20,7 @@ Eigen::Vector3f current_pos(0,0,0);
 #define STEP_FWD 10 // same as above except forward
 
 // ---- CARROT FOLLOWING ----
-#define LOOKAHEAD_DIST 0.125       // distance from closest point on path to carrot [m]
+#define LOOKAHEAD_DIST 0.15       // distance from closest point on path to carrot [m]
 #define MAX_CARROT_JUMP 100         // limit single carrot movement to this distance [m]
 #define START_THRESHOLD 0.15             // error threshold for knowing if start of path has been reached [m]
 #define SEARCH_WIN_START -3             // how far to step back when searching for closest point in path
