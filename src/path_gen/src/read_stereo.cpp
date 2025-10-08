@@ -26,7 +26,7 @@ using namespace std;
 #define BBY 240
 
 // INPUT PARAMETERS
-#define R_AVOID 0.1 // inner radius to avoid cutting [m]
+#define R_AVOID 0.2 // inner radius to avoid cutting [m]
 // #define H_LAYER 0.2 // distance between cutting layers [m]
 #define D_CUT 0.4 // proportion of total height to cut [m] 
 #define MAX_DEPTH 1.0 // maximum total path depth [m]
@@ -54,8 +54,8 @@ void Cylinder(float r, int n, float h, float cyl[][3]){
 
   // generate circle
   for(int i = 0; i < n; i++){
-    cyl[i][0] = r*cos(i*dt);
-    cyl[i][1] = r*sin(i*dt);
+    cyl[i][0] = r*cos(-1*i*dt);
+    cyl[i][1] = r*sin(-1*i*dt);
     cyl[i][2] = h;
   }
 }
@@ -68,7 +68,7 @@ void Spiral(float r_min, float r_max, int n_points, int n_spiral, float h, int i
 
   // generate spiral (outside -> in)
   int cnt = idx_start;
-  for(int i = n_points - 1; i >= 0; i--){
+  for(int i = n_points; i >= 0 ; i--){
     sp[cnt][0] = (r_min+dr*i)*cos(i*dt);
     sp[cnt][1] = (r_min+dr*i)*sin(i*dt);
     sp[cnt][2] = h;
@@ -112,7 +112,7 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
   logfile.open(filename);
   logfile_csv.open(filename_csv);
 
-  logfile << "Path centered at: " << dcpt.x << ", " << dcpt.y << endl;
+  logfile << "Path centered at: WORLD FRAME [" << dcpt.x << ", " << dcpt.y << "], DRONE FRAME [" << dcx << "," << dcy << "]" << endl;
   logfile << "-----PARAMETERS-----" << endl;
   logfile << "n_spiral (max) = " << n_spiral_init << endl;
   logfile << "layer_height = " << h_layer << endl;

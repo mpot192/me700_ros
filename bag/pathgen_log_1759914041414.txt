@@ -1,0 +1,10 @@
+Path centered at: WORLD FRAME [0.0159123, 0.0159123], DRONE FRAME [0.0159123,0.0270311]
+-----PARAMETERS-----
+n_spiral (max) = 2
+layer_height = 0.2
+--------------------
+Starting at 18m
+Ending at 18m
+Depth = 0m (40%)
+Path size = 0
+{[],[],[]}

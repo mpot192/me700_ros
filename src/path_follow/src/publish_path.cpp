@@ -20,9 +20,9 @@ Eigen::Vector3f current_pos(0,0,0);
 #define STEP_FWD 10 // same as above except forward
 
 // ---- CARROT FOLLOWING ----
-#define LOOKAHEAD_DIST 0.125            // distance from closest point on path to carrot [m]
+#define LOOKAHEAD_DIST 0.125       // distance from closest point on path to carrot [m]
 #define MAX_CARROT_JUMP 100         // limit single carrot movement to this distance [m]
-#define START_THRESHOLD 0.2             // error threshold for knowing if start of path has been reached [m]
+#define START_THRESHOLD 0.15             // error threshold for knowing if start of path has been reached [m]
 #define SEARCH_WIN_START -3             // how far to step back when searching for closest point in path
 #define SEARCH_WIN_STOP 3               // ^^ but forward
 
@@ -374,6 +374,7 @@ int main(int argc, char **argv){
     std::string filename_xte = "/home/matt/catkin_ws/bag/path_follow_xte_log_" + std::to_string(ms) + ".txt";
     std::string filename_dist_err_csv =  "/home/matt/catkin_ws/bag/path_follow_dist_err_log_" + std::to_string(ms) + ".csv";
     std::string filename_xte_csv = "/home/matt/catkin_ws/bag/path_follow_xte_log_" + std::to_string(ms) + ".csv";
+    std::string filename_pos = "/home/matt/catkin_ws/bag/path_follow_pos_log_" + std::to_string(ms) + ".csv";
 
     std::ofstream logfile_dist_err; // logfile for dist_err output in matlab cell array format
     logfile_dist_err.open(filename_dist_err);
@@ -386,6 +387,9 @@ int main(int argc, char **argv){
 
     std::ofstream logfile_xte_csv;
     logfile_xte_csv.open(filename_xte_csv);
+
+    std::ofstream logfile_pos;
+    logfile_pos.open(filename_pos);
 
     if(follow_mode == "pos"){
         logfile_dist_err << "dist_err_pos = {[";
@@ -400,6 +404,7 @@ int main(int argc, char **argv){
 
     logfile_dist_err_csv << "dist_err,waypoint_idx\n";
     logfile_xte_csv << "xte,waypoint_idx\n";
+    logfile_pos << "x,y,z\n";
 
     ros::Time follow_start;
 
@@ -416,11 +421,11 @@ int main(int argc, char **argv){
             // Get target point
             current_target <<  path.poses[idx].pose.position.x, path.poses[idx].pose.position.y, path.poses[idx].pose.position.z;
             
-            // calcualte error from path
+            // calculate error from path
             dx = current_target.x() - drone_odom.pose.pose.position.x;
             dy = current_target.y() - drone_odom.pose.pose.position.y;
             dz = current_target.z() - drone_odom.pose.pose.position.z;
-
+            logfile_pos << drone_odom.pose.pose.position.x << "," << drone_odom.pose.pose.position.y << "," << drone_odom.pose.pose.position.x << "\n";
             distErr = GetDistErr(current_target);
             XTE = GetCrosstrack(current_target, idx);
             // data, only start once reached first point in the path
@@ -683,6 +688,7 @@ int main(int argc, char **argv){
     logfile_xte.close();
     logfile_dist_err_csv.close();
     logfile_xte_csv.close();
+    logfile_pos.close();
     return 0;
 
 }
