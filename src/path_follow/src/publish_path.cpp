@@ -425,7 +425,7 @@ int main(int argc, char **argv){
             dx = current_target.x() - drone_odom.pose.pose.position.x;
             dy = current_target.y() - drone_odom.pose.pose.position.y;
             dz = current_target.z() - drone_odom.pose.pose.position.z;
-            logfile_pos << drone_odom.pose.pose.position.x << "," << drone_odom.pose.pose.position.y << "," << drone_odom.pose.pose.position.x << "\n";
+            logfile_pos << drone_odom.pose.pose.position.x << "," << drone_odom.pose.pose.position.y << "," << drone_odom.pose.pose.position.z << "\n";
             distErr = GetDistErr(current_target);
             XTE = GetCrosstrack(current_target, idx);
             // data, only start once reached first point in the path

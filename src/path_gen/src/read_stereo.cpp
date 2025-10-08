@@ -31,7 +31,7 @@ using namespace std;
 #define D_CUT 0.4 // proportion of total height to cut [m] 
 #define MAX_DEPTH 1.0 // maximum total path depth [m]
 #define UNCERTAINTY 0.9 // fraction inside bounding box to be used for path generation
-#define MIN_SPACE 0.15 // minimum spacing between spiral loops/concentric circles in a layer
+#define MIN_SPACE 0.1 // minimum spacing between spiral loops/concentric circles in a layer
 #define N_LAYER_POINTS 50 // number of points in a layer 
 #define N_SPIRALS 3 // target number of spirals in a layer
 
