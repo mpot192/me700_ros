@@ -238,12 +238,12 @@ int GeneratePath(float (&path)[3][PATH_SIZE], int bbx, int bby, int bbh, int bbw
       r = R_AVOID;
     }
 
-    while((r-R_AVOID)/n_spiral < MIN_SPACE && n_spiral > 1){
+    while((r-R_AVOID)/n_spiral < MIN_SPACE && n_spiral > 0){
       n_spiral--;
     }
 
     // generate layers, spiral if large enough otherwise single circle
-    if(n_spiral == 1){ // circle
+    if(n_spiral == 0){ // circle
       ROS_INFO("Generating Layer %d as a circle with r = %.2fm.", i, r);
       Cylinder(r, n_points, layer_depths[i], cyl);
       actual_points = n_points;
