@@ -90,7 +90,7 @@ float GetCrosstrack(Eigen::Vector3f des_pos, int idx){
 
   // find waypoint closest to drone currently within set window
   // saturate to ensure checking within path limits
-  search_start = std::min(idx, STEP_BACK);
+  search_start = std::max(idx - STEP_BACK, 0);
   search_stop = std::min(idx + STEP_FWD, path_sz);
 
   // search through window and find waypoint closest to drone
@@ -627,7 +627,8 @@ int main(int argc, char **argv){
                         ROS_INFO_THROTTLE(1,"(%d/%d) Carrot position: [%.2f, %.2f, %.2f]", current_layer_idx, nlayers - 1, carrot.x(), carrot.y(), carrot.z());
                         
                         if(dist_to_carrot > 0.01){ // balls 0.1 0.01
-                            variable_speed = std::min(set_speed, (float)((set_speed/2) + (set_speed/2)*(dist_to_carrot/LOOKAHEAD_DIST - LOOKAHEAD_DIST))); // vary speed between set_speed/2 and set_speed
+                            // variable speed(unused)
+                            variable_speed = std::min(set_speed, (float)((set_speed/2) + (set_speed/2)*(dist_to_carrot/LOOKAHEAD_DIST - LOOKAHEAD_DIST))); // vary speed between set_speed/2 and set_speed 
                             // normalized gets the unit vector
                             // could set speed to be different for moving to first point in layer if desired
                             if (!reached_first_point){
