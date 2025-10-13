@@ -22,7 +22,7 @@
 	<uri>model://basic_cone</uri>
 	<pose>0 0 0 0 0 0</pose>
     </include>
-    <include>
+ <!--   <include>
     <uri>model://basic_cylinder</uri>
 	<pose>-5 0 0 0 0 0</pose>
     </include>
@@ -41,7 +41,7 @@
     <include>
     <uri>model://solanum</uri>
 	<pose>5 -10 0 1.571 0 0</pose>
-    </include>
+    </include>-->
     <model name='ground_plane'>
       <static>1</static>
       <link name='link'>
