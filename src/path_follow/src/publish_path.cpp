@@ -626,7 +626,7 @@ int main(int argc, char **argv){
 
                         ROS_INFO_THROTTLE(1,"(%d/%d) Carrot position: [%.2f, %.2f, %.2f]", current_layer_idx, nlayers - 1, carrot.x(), carrot.y(), carrot.z());
                         
-                        if(dist_to_carrot > 0.01){ // balls 0.1 0.01
+                        if(dist_to_carrot > 0.01){
                             // variable speed(unused)
                             variable_speed = std::min(set_speed, (float)((set_speed/2) + (set_speed/2)*(dist_to_carrot/LOOKAHEAD_DIST - LOOKAHEAD_DIST))); // vary speed between set_speed/2 and set_speed 
                             // normalized gets the unit vector
@@ -634,7 +634,7 @@ int main(int argc, char **argv){
                             if (!reached_first_point){
                                 velocity = direction_to_carrot.normalized() * set_speed;
                             }else{
-                                velocity = direction_to_carrot.normalized() * set_speed; // balls
+                                velocity = direction_to_carrot.normalized() * set_speed;
                             }
                         } else{
                             velocity = Eigen::Vector3f(0, 0, 0);
